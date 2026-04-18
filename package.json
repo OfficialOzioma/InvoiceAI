@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npx @tailwindcss/cli -i ./src/styles.css -o ./public/css/output.css --watch\" \"nodemon --exec tsx server.ts\"",
+    "dev": "concurrently \"npx @tailwindcss/cli -i ./src/styles.css -o ./public/css/output.css --watch\" \"tsx server.ts\"",
     "build": "npx @tailwindcss/cli -i ./src/styles.css -o ./public/css/output.css --minify",
     "start": "node server.ts",
     "clean": "rm -rf public/css/output.css",
@@ -21,7 +21,6 @@
     "express-session": "^1.19.0",
     "firebase": "^12.12.0",
     "firebase-admin": "^13.8.0",
-    "nodemon": "^3.1.14",
     "tailwind-merge": "^3.5.0",
     "zod": "^4.3.6"
   },
