@@ -1,81 +1,333 @@
-<div class="space-y-8">
-    <div class="flex items-center justify-between">
+<!-- Need SortableJS for drag and drop -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+<div class="space-y-6 md:space-y-8" 
+     x-data="invoiceEngine(<%= JSON.stringify(invoices) %>)"
+     x-init="initSortable()">
+
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-extrabold tracking-tight mb-2 text-secondary">Invoice Engine</h1>
-        <p class="text-muted text-sm">Managing <%= invoices.length %> active invoices across workspace.</p>
+        <h1 class="text-2xl md:text-3xl font-black tracking-tight mb-1 text-slate-900 leading-none">Invoices</h1>
+        <p class="text-sm text-slate-500 font-medium">Tracking <span x-text="records.length"></span> active records.</p>
       </div>
-      <div class="flex gap-3">
-        <a href="/invoices/new" class="bg-secondary text-white px-5 py-2.5 rounded-md text-xs font-bold flex items-center gap-2 hover:bg-primary transition-all italic">
-          <i data-lucide="zap" class="w-4 h-4 fill-white"></i> New AI Draft
-        </a>
-        <a href="/invoices/new" class="bg-primary text-white px-5 py-2.5 rounded-md text-xs font-bold flex items-center gap-2 hover:bg-secondary transition-all">
-          <i data-lucide="plus" class="w-4 h-4"></i> Manual
-        </a>
+      
+      <!-- Create Button & View Toggles -->
+      <div class="flex flex-col-reverse md:flex-row items-center gap-3 w-full md:w-auto">
+        <!-- View Toggle -->
+        <div class="flex bg-slate-100 p-1 rounded-xl w-full md:w-auto">
+            <button @click="view = 'table'" :class="view === 'table' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-900'" class="flex-1 px-4 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all flex justify-center items-center gap-1.5">
+                <i data-lucide="list" class="w-3.5 h-3.5"></i> Table
+            </button>
+            <button @click="view = 'kanban'" :class="view === 'kanban' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-900'" class="flex-1 px-4 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all flex justify-center items-center gap-1.5">
+                <i data-lucide="kanban-square" class="w-3.5 h-3.5"></i> Board
+            </button>
+        </div>
+
+        <!-- New Invoice Dropdown -->
+        <div class="relative group w-full md:w-auto" x-data="{ open: false }" @click.outside="open = false">
+            <button @click="open = !open" class="w-full bg-slate-900 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex flex-row items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20">
+                <i data-lucide="plus" class="w-4 h-4"></i> New Invoice <i data-lucide="chevron-down" class="w-3 h-3 ml-1"></i>
+            </button>
+            <div x-show="open" x-transition.opacity class="absolute right-0 mt-2 w-full md:w-48 bg-white border border-slate-100 rounded-xl shadow-xl shadow-slate-200/50 z-50 origin-top">
+               <a href="/invoices/new" class="block px-4 py-3 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-t-xl transition-colors border-b border-slate-50">
+                 <div class="flex items-center gap-2"><i data-lucide="pen-tool" class="w-3.5 h-3.5 text-slate-400"></i> Manual Entry</div>
+               </a>
+               <a href="/invoices/ai" class="block px-4 py-3 text-xs font-bold text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 rounded-b-xl transition-colors">
+                 <div class="flex items-center gap-2"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Generate with AI</div>
+               </a>
+            </div>
+        </div>
       </div>
     </div>
 
-    <div class="bg-white rounded-[16px] border border-border shadow-sm overflow-hidden">
-      <!-- Filters -->
-      <div class="p-6 border-b border-border flex flex-wrap items-center justify-between gap-6">
-        <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-border">
-          <button class="px-4 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest bg-white text-primary shadow-sm">all</button>
-          <button class="px-4 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest text-muted hover:text-secondary">draft</button>
-          <button class="px-4 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest text-muted hover:text-secondary">paid</button>
+    <!-- Toolbar Filters -->
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-2 flex flex-col md:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-1 w-full md:w-auto overflow-x-auto no-scrollbar pb-1 md:pb-0">
+          <template x-for="f in ['All', 'Draft', 'Pending', 'Paid', 'Overdue']">
+            <button @click="filter = f" 
+                    :class="filter === f ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50'"
+                    class="px-4 py-2 shrink-0 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-colors"
+                    x-text="f"></button>
+          </template>
         </div>
         
-        <div class="flex items-center gap-4">
-           <div class="relative">
+        <div class="flex items-center gap-2 w-full md:w-auto">
+           <div class="relative flex-1 md:w-64">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4"></i>
-            <input type="text" placeholder="Search invoices..." class="pl-9 pr-4 py-2.5 bg-slate-50 border border-border rounded-lg text-xs outline-none focus:bg-white focus:border-primary transition-all" />
+            <input type="text" x-model="searchQuery" placeholder="Search invoices..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all font-medium text-slate-700 placeholder:text-slate-400" />
            </div>
-           <button class="p-2.5 bg-slate-50 border border-border rounded-lg text-slate-400 hover:text-primary transition-colors">
-             <i data-lucide="filter" class="w-4.5 h-4.5"></i>
-           </button>
         </div>
-      </div>
+    </div>
 
+    <!-- TABLE VIEW -->
+    <div x-show="view === 'table'" class="block bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden min-h-[400px]">
       <div class="overflow-x-auto">
         <table class="w-full text-left">
           <thead>
-            <tr class="bg-slate-50/50">
-              <th class="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted">Invoice</th>
-              <th class="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted">Issued</th>
-              <th class="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted">Status</th>
-              <th class="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted text-right">Amount</th>
-              <th class="px-8 py-4"></th>
+            <tr class="bg-slate-50/50 border-b border-slate-100">
+              <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Invoice</th>
+              <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Issued Date</th>
+              <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Status</th>
+              <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Amount</th>
+              <th class="px-6 py-4 w-10"></th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-50">
-            <% if (invoices.length === 0) { %>
+            <template x-if="filteredRecords.length === 0">
                <tr>
-                 <td colspan="5" class="px-8 py-20 text-center text-muted italic">No invoices found.</td>
+                 <td colspan="5" class="px-6 py-20 text-center text-slate-400 text-sm font-medium">No invoices found.</td>
                </tr>
-            <% } else { %>
-              <% invoices.forEach(inv => { %>
-                <tr class="hover:bg-slate-50/50 transition-colors group">
-                    <td class="px-8 py-6">
-                        <div class="font-bold text-secondary"><%= inv.invoiceNumber %></div>
-                        <div class="text-[10px] text-muted font-mono">ID: <%= inv.id.slice(0,8) %></div>
+            </template>
+            <template x-for="inv in filteredRecords" :key="inv.id">
+                <tr class="hover:bg-slate-50/50 transition-colors group cursor-pointer" @click="openDetails(inv, $event)">
+                    <td class="px-6 py-5">
+                        <div class="font-bold text-sm text-slate-900 mb-0.5" x-text="inv.clientName"></div>
+                        <div class="text-[10px] text-slate-500 font-bold uppercase tracking-widest" x-text="inv.invoiceNumber"></div>
                     </td>
-                    <td class="px-8 py-6 text-sm text-muted">
-                        <%= new Date(inv.createdAt).toLocaleDateString() %>
-                    </td>
-                    <td class="px-8 py-6">
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-600">
-                            <%= inv.status %>
+                    <td class="px-6 py-5 text-sm text-slate-500 font-medium" x-text="formatDate(inv.createdAt)"></td>
+                    <td class="px-6 py-5">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest"
+                              :class="{
+                                'bg-emerald-50 text-emerald-600': inv.status === 'Paid',
+                                'bg-amber-50 text-amber-600': inv.status === 'Pending',
+                                'bg-slate-100 text-slate-600': inv.status === 'Draft',
+                                'bg-rose-50 text-rose-600': inv.status === 'Overdue'
+                              }" x-text="inv.status">
                         </span>
                     </td>
-                    <td class="px-8 py-6 text-right font-bold font-mono text-primary">$<%= inv.total %></td>
-                    <td class="px-8 py-6 text-right">
-                        <a href="/invoices/edit/<%= inv.id %>" class="text-slate-300 hover:text-primary transition-colors">
-                            <i data-lucide="arrow-up-right" class="w-5 h-5"></i>
-                        </a>
+                    <td class="px-6 py-5 text-right font-black tracking-tight text-slate-900">
+                        $<span x-text="inv.total"></span>
+                    </td>
+                    
+                    <!-- Row Actions Dropdown -->
+                    <td class="px-6 py-5 text-right relative" x-data="{ menuOpen: false }" @click.outside="menuOpen = false">
+                        <button @click.stop="menuOpen = !menuOpen" class="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-all">
+                            <i data-lucide="more-horizontal" class="w-4 h-4"></i>
+                        </button>
+                        <div x-show="menuOpen" class="absolute right-8 top-10 w-48 bg-white border border-slate-100 shadow-xl shadow-slate-200/50 rounded-xl z-50 overflow-hidden" style="display: none;">
+                            <button @click.stop="openDetails(inv); menuOpen = false" class="w-full text-left px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors">View Details</button>
+                            <div class="border-t border-slate-100 my-1"></div>
+                            <div class="px-4 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Change Status</div>
+                            <template x-for="s in ['Draft', 'Pending', 'Paid', 'Overdue']">
+                               <button x-show="s !== inv.status" @click.stop="updateStatus(inv.id, s); menuOpen = false" class="w-full text-left px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors" x-text="s"></button>
+                            </template>
+                            <div class="border-t border-slate-100 my-1"></div>
+                            <button @click.stop="deleteInvoice(inv.id); menuOpen = false" class="w-full text-left px-4 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors">Delete</button>
+                        </div>
                     </td>
                 </tr>
-              <% }) %>
-            <% } %>
+            </template>
           </tbody>
         </table>
       </div>
     </div>
+
+    <!-- KANBAN VIEW -->
+    <div x-show="view === 'kanban'" class="hidden" :class="{'hidden': view !== 'kanban', 'block': view === 'kanban'}">
+      <div class="flex overflow-x-auto gap-4 md:gap-6 pb-6 snap-x min-h-[500px]">
+          
+          <template x-for="col in kanbanColumns" :key="col.name">
+              <div class="w-[300px] min-w-[300px] shrink-0 bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex flex-col snap-start">
+                  
+                  <div class="flex items-center justify-between mb-4 px-1">
+                      <div class="flex items-center gap-2">
+                          <div class="w-6 h-6 rounded flex items-center justify-center" :class="col.color">
+                                <!-- Re-initialize lucide icons using x-html for simplicity, or just use css icons. Will use simple shape -->
+                                <div class="w-2 h-2 rounded-full bg-current"></div>
+                          </div>
+                          <h3 class="font-bold text-xs uppercase tracking-widest text-slate-700" x-text="col.name"></h3>
+                      </div>
+                      <span class="text-[10px] font-bold bg-white border border-slate-200 text-slate-500 px-2 py-0.5 rounded-full shadow-sm" x-text="getColRecords(col.name).length"></span>
+                  </div>
+
+                  <!-- Sortable Container -->
+                  <div class="space-y-3 flex-1 kanban-list min-h-[100px]" :data-status="col.name">
+                      <template x-for="inv in getColRecords(col.name)" :key="inv.id">
+                          <div class="bg-white p-4 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.05)] border border-slate-100 group cursor-grab hover:shadow-md hover:border-slate-300 transition-all kanban-item" 
+                               :data-id="inv.id"
+                               @click="openDetails(inv, $event)">
+                              
+                              <div class="flex items-start justify-between mb-3 pointer-events-none">
+                                  <div class="font-bold text-slate-900 text-sm leading-tight truncate pr-2" x-text="inv.clientName"></div>
+                                  <div class="text-slate-300 group-hover:text-amber-500 transition-colors opacity-0 group-hover:opacity-100">
+                                     <svg class="w-4 h-4 cursor-pointer indicator-dots pointer-events-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                                  </div>
+                              </div>
+                              <div class="flex flex-col gap-2 pointer-events-none">
+                                <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400" x-text="inv.invoiceNumber"></div>
+                                <div class="flex items-center justify-between mt-1">
+                                   <div class="font-black text-slate-900 tracking-tight">$<span x-text="inv.total"></span></div>
+                                   <div class="text-[10px] font-medium text-slate-400" x-text="formatDate(inv.createdAt)"></div>
+                                </div>
+                              </div>
+
+                          </div>
+                      </template>
+                      
+                      <div x-show="getColRecords(col.name).length === 0" class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center">
+                          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Empty</p>
+                      </div>
+                  </div>
+              </div>
+          </template>
+
+      </div>
+    </div>
+
+    <!-- INVOICE DETAILS MODAL (Desktop/Tablet) -->
+    <div x-show="modalOpen" class="fixed inset-0 z-50 flex items-center justify-center px-4" style="display: none;">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" @click="modalOpen = false"></div>
+        
+        <!-- Modal Content -->
+        <div class="bg-white rounded-2xl w-full max-w-2xl z-10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <template x-if="selectedInvoice">
+                <div>
+                   <div class="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
+                       <h2 class="text-xl font-black text-slate-900" x-text="selectedInvoice.clientName"></h2>
+                       <button @click="modalOpen = false" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
+                           <i data-lucide="x" class="w-4 h-4 text-slate-500"></i>
+                       </button>
+                   </div>
+                   <div class="p-8">
+                       <div class="flex justify-between items-start mb-8">
+                          <div>
+                            <div class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-3" x-text="selectedInvoice.invoiceNumber"></div>
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest"
+                                  :class="{
+                                    'bg-emerald-50 text-emerald-600': selectedInvoice.status === 'Paid',
+                                    'bg-amber-50 text-amber-600': selectedInvoice.status === 'Pending',
+                                    'bg-slate-100 text-slate-600': selectedInvoice.status === 'Draft',
+                                    'bg-rose-50 text-rose-600': selectedInvoice.status === 'Overdue'
+                                  }" x-text="selectedInvoice.status">
+                            </span>
+                          </div>
+                          <div class="text-right">
+                            <div class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Total Due</div>
+                            <div class="text-3xl font-black text-slate-900">$<span x-text="selectedInvoice.total"></span></div>
+                          </div>
+                      </div>
+                      
+                      <div class="grid grid-cols-2 gap-8 border-t border-slate-100 pt-8">
+                         <div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Billed To</div>
+                            <div class="font-medium text-slate-900 text-sm" x-text="selectedInvoice.clientName"></div>
+                            <div class="text-xs text-slate-500 mt-1">123 Corporate Blvd.<br/>San Francisco, CA</div>
+                         </div>
+                         <div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Issue Date</div>
+                            <div class="font-medium text-slate-900 text-sm" x-text="formatDate(selectedInvoice.createdAt)"></div>
+                         </div>
+                      </div>
+
+                   </div>
+                   <div class="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                       <button @click="modalOpen = false" class="px-5 py-2 text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">Close</button>
+                       <button @click="window.location.href = '/invoices/' + selectedInvoice.id" class="px-5 py-2 bg-slate-900 text-white rounded-lg text-sm font-bold shadow-md hover:bg-slate-800 transition-colors">Full Page View</button>
+                   </div>
+                </div>
+            </template>
+        </div>
+    </div>
 </div>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('invoiceEngine', (initialRecords) => ({
+            records: initialRecords,
+            view: 'table',
+            filter: 'All',
+            searchQuery: '',
+            modalOpen: false,
+            selectedInvoice: null,
+            kanbanColumns: [
+                { name: 'Draft', color: 'bg-slate-100 text-slate-600' },
+                { name: 'Pending', color: 'bg-amber-100 text-amber-600' },
+                { name: 'Overdue', color: 'bg-rose-100 text-rose-600' },
+                { name: 'Paid', color: 'bg-emerald-100 text-emerald-600' }
+            ],
+
+            get filteredRecords() {
+                return this.records.filter(inv => {
+                    const matchesFilter = this.filter === 'All' || inv.status === this.filter;
+                    const matchesSearch = inv.clientName.toLowerCase().includes(this.searchQuery.toLowerCase()) || 
+                                          inv.invoiceNumber.toLowerCase().includes(this.searchQuery.toLowerCase());
+                    return matchesFilter && matchesSearch;
+                });
+            },
+
+            getColRecords(status) {
+                return this.filteredRecords.filter(i => i.status === status);
+            },
+
+            formatDate(d) {
+                return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            },
+
+            openDetails(inv, event) {
+                // Ignore clicks on action buttons inside the row/card
+                if (event && event.target.closest('button') && !event.target.closest('.indicator-dots')) return;
+
+                // Open Modal on Desktop (>= 768px), redirect on mobile
+                if (window.innerWidth < 768) {
+                    window.location.href = `/invoices/${inv.id}`;
+                } else {
+                    this.selectedInvoice = inv;
+                    this.modalOpen = true;
+                    setTimeout(() => lucide.createIcons(), 10);
+                }
+            },
+
+            async updateStatus(id, newStatus) {
+                try {
+                    const res = await fetch(`/invoices/${id}/status`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: newStatus })
+                    });
+                    if (res.ok) {
+                        const idx = this.records.findIndex(i => i.id === id);
+                        if (idx > -1) this.records[idx].status = newStatus;
+                    }
+                } catch(e) {
+                    console.error("Status update failed", e);
+                }
+            },
+
+            async deleteInvoice(id) {
+                if(!confirm("Are you sure you want to delete this invoice?")) return;
+                try {
+                    const res = await fetch(`/invoices/${id}`, { method: 'DELETE' });
+                    if (res.ok) {
+                        this.records = this.records.filter(i => i.id !== id);
+                        if (this.selectedInvoice && this.selectedInvoice.id === id) this.modalOpen = false;
+                    }
+                } catch(e) { console.error("Delete failed", e); }
+            },
+
+            initSortable() {
+                // Initialize drag and drop for kanban columns
+                this.$nextTick(() => {
+                    const lists = document.querySelectorAll('.kanban-list');
+                    lists.forEach(el => {
+                        new Sortable(el, {
+                            group: 'kanban',
+                            animation: 150,
+                            ghostClass: 'opacity-50',
+                            onEnd: (evt) => {
+                                const itemId = evt.item.dataset.id;
+                                const newStatus = evt.to.dataset.status;
+                                const oldStatus = evt.from.dataset.status;
+                                
+                                if (newStatus && newStatus !== oldStatus) {
+                                    this.updateStatus(itemId, newStatus);
+                                }
+                            }
+                        });
+                    });
+                });
+            }
+        }));
+    });
+</script>
