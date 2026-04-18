@@ -1,0 +1,344 @@
+<%- include('../partials/layout-header') %>
+
+<main class="min-h-screen bg-[#F8FAFC] py-12 px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Progress Header -->
+        <div class="mb-12">
+            <div class="flex items-center justify-between mb-4">
+                <a href="/" class="text-2xl font-black tracking-tighter text-secondary">
+                    Invoice<span class="text-primary italic">AI</span>
+                </a>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-muted">Step <%= step %> of <%= totalSteps %></span>
+            </div>
+            <div class="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                <div class="h-full bg-primary transition-all duration-500" style="width: <%= (step / totalSteps) * 100 %>%"></div>
+            </div>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-12 items-start">
+            <!-- Form Side -->
+            <div class="bg-white p-8 lg:p-12 rounded-[40px] shadow-2xl shadow-blue-500/5 border border-slate-100 space-y-8">
+                <div class="space-y-2">
+                    <h2 class="text-3xl font-black tracking-tighter text-secondary"><%= stepTitle %></h2>
+                    <p class="text-sm text-slate-500 font-medium">Let's get your workspace ready for action.</p>
+                </div>
+
+                <form action="/onboarding/step/<%= step %>" method="POST" class="space-y-6" id="onboardingForm" enctype="<%= step === 2 ? 'multipart/form-data' : 'application/x-www-form-urlencoded' %>">
+                    <% if (step === 1) { %>
+                        <!-- Step 1: Business Information -->
+                        <div class="space-y-4">
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Legal Business Name</label>
+                                <input type="text" name="businessName" required placeholder="Acme International" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Business Email</label>
+                                    <input type="email" name="businessEmail" required placeholder="billing@acme.com" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Phone Number</label>
+                                    <input type="tel" name="phone" required placeholder="+1 (555) 000-0000" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all">
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Registration Address</label>
+                                <textarea name="address" required rows="3" placeholder="123 Business Way, Silicon Valley, CA" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all"></textarea>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Default Currency</label>
+                                <select name="currency" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all appearance-none">
+                                    <option value="USD">USD - US Dollar</option>
+                                    <option value="NGN">NGN - Nigerian Naira</option>
+                                    <option value="EUR">EUR - Euro</option>
+                                    <option value="GBP">GBP - British Pound</option>
+                                </select>
+                            </div>
+                        </div>
+                    <% } else if (step === 2) { %>
+                        <!-- Step 2: Branding -->
+                        <div class="space-y-6">
+                            <div class="space-y-4">
+                                <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Business Logo</label>
+                                <div class="flex items-center gap-6">
+                                    <div class="w-24 h-24 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center text-slate-400 overflow-hidden" id="logoPreview">
+                                        <i data-lucide="image" class="w-8 h-8"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <input type="file" name="logo" id="logoInput" class="hidden" accept="image/*">
+                                        <button type="button" onclick="document.getElementById('logoInput').click()" class="bg-slate-100 text-secondary px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-200 transition-all">Upload Logo</button>
+                                        <p class="text-[10px] text-slate-400 mt-2 font-medium">PNG, JPG up to 2MB</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="space-y-4">
+                                <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Brand Colors</label>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="relative">
+                                        <input type="color" name="colorPrimary" value="#3B82F6" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                                        <div class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm flex items-center gap-3">
+                                            <div class="w-5 h-5 rounded-full border border-slate-200" style="background-color: #3B82F6"></div>
+                                            <span class="font-bold text-xs uppercase">Primary</span>
+                                        </div>
+                                    </div>
+                                    <div class="relative">
+                                        <input type="color" name="colorSecondary" value="#0F172A" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                                        <div class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm flex items-center gap-3">
+                                            <div class="w-5 h-5 rounded-full border border-slate-200" style="background-color: #0F172A"></div>
+                                            <span class="font-bold text-xs uppercase">Secondary</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% } else if (step === 3) { %>
+                        <!-- Step 3: Template Selection -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <label class="relative cursor-pointer group">
+                                <input type="radio" name="templateId" value="modern" checked class="absolute opacity-0">
+                                <div class="border-2 border-slate-100 rounded-2xl p-4 transition-all group-has-[:checked]:border-primary group-has-[:checked]:bg-blue-50/50">
+                                    <div class="aspect-[3/4] bg-slate-100 rounded-lg mb-3"></div>
+                                    <span class="text-[10px] font-black uppercase tracking-widest">The Modernist</span>
+                                </div>
+                            </label>
+                            <label class="relative cursor-pointer group">
+                                <input type="radio" name="templateId" value="minimal" class="absolute opacity-0">
+                                <div class="border-2 border-slate-100 rounded-2xl p-4 transition-all group-has-[:checked]:border-primary group-has-[:checked]:bg-blue-50/50">
+                                    <div class="aspect-[3/4] bg-slate-100 rounded-lg mb-3"></div>
+                                    <span class="text-[10px] font-black uppercase tracking-widest">Swiss Minimal</span>
+                                </div>
+                            </label>
+                        </div>
+                    <% } else if (step === 4) { %>
+                        <!-- Step 4: Payment Configuration -->
+                        <div class="space-y-6">
+                            <label class="block p-6 border-2 border-slate-100 rounded-[24px] cursor-pointer transition-all has-[:checked]:border-primary has-[:checked]:bg-blue-50/50">
+                                <input type="radio" name="paymentType" value="platform" checked class="hidden peer">
+                                <div class="flex items-start gap-4">
+                                    <div class="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
+                                        <i data-lucide="zap" class="w-5 h-5 text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <span class="block text-sm font-black text-secondary">Platform Gateway (Recommended)</span>
+                                        <span class="block text-xs text-slate-500 mt-1">Zero setup. We handle everything for a small transaction fee.</span>
+                                    </div>
+                                </div>
+                            </label>
+
+                            <label class="block p-6 border-2 border-slate-100 rounded-[24px] cursor-pointer transition-all has-[:checked]:border-primary has-[:checked]:bg-blue-50/50 group">
+                                <input type="radio" name="paymentType" value="custom" class="hidden peer">
+                                <div class="flex items-start gap-4">
+                                    <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center shrink-0 group-has-[:checked]:bg-primary/10">
+                                        <i data-lucide="shield-check" class="w-5 h-5 text-slate-400 group-has-[:checked]:text-primary"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <span class="block text-sm font-black text-secondary">Direct Paystack Connect</span>
+                                        <span class="block text-xs text-slate-500 mt-1">Full control. Connect your own Paystack keys.</span>
+                                        
+                                        <div class="mt-4 space-y-3 hidden group-has-[:checked]:block">
+                                            <input type="text" name="paystackPublicKey" placeholder="pk_test_..." class="w-full bg-white border border-slate-100 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary">
+                                            <input type="password" name="paystackSecretKey" placeholder="sk_test_..." class="w-full bg-white border border-slate-100 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary">
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    <% } else if (step === 5) { %>
+                        <!-- Step 5: First Invoice Training -->
+                        <div class="space-y-6">
+                            <div class="flex p-1 bg-slate-100 rounded-xl">
+                                <button type="button" onclick="toggleInvoiceMode('manual')" class="flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all" id="btnManual">Manual Entry</button>
+                                <button type="button" onclick="toggleInvoiceMode('ai')" class="flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-lg bg-white shadow-sm ring-1 ring-slate-200 transition-all" id="btnAI">AI Assistant</button>
+                            </div>
+
+                            <div id="manualFields" class="hidden space-y-4">
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Client Name</label>
+                                    <input type="text" name="clientName" id="clientName" placeholder="John Doe" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Line Items</label>
+                                    <div id="itemsContainer" class="space-y-2">
+                                        <div class="flex gap-2">
+                                            <input type="text" name="items[0][description]" placeholder="Item name" class="flex-1 bg-slate-50 border border-slate-100 rounded-lg px-3 py-3 text-xs">
+                                            <input type="number" name="items[0][amount]" placeholder="Price" class="w-24 bg-slate-50 border border-slate-100 rounded-lg px-3 py-3 text-xs">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="aiMode" class="space-y-4">
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-bold uppercase tracking-widest text-muted">What are you billing for?</label>
+                                    <textarea name="aiPrompt" id="aiPrompt" rows="4" placeholder="I just completed 10 hours of web development for a New York client at $150/hr..." class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all"></textarea>
+                                </div>
+                                <button type="button" onclick="generateAIInvoice()" id="generateBtn" class="w-full border-2 border-primary text-primary py-4 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2">
+                                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                                    Generate Draft
+                                </button>
+                            </div>
+                        </div>
+                    <% } %>
+
+                    <div class="pt-8 block">
+                        <button type="submit" class="w-full bg-primary text-white py-5 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-secondary transition-all shadow-xl shadow-blue-100 flex items-center justify-center gap-3">
+                            <%= step === 5 ? 'Launch Dashboard' : 'Continue' %>
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Preview Side -->
+            <div class="sticky top-12 hidden lg:block">
+                <div class="bg-slate-900 rounded-[40px] p-8 aspect-[3/4] shadow-2xl relative overflow-hidden group">
+                    <div class="absolute inset-x-0 top-0 h-1 mt-4 mx-8 bg-slate-800 rounded-full overflow-hidden">
+                        <div class="h-full bg-primary/20 w-1/3 animate-pulse"></div>
+                    </div>
+                    
+                    <div class="mt-8 space-y-6 opacity-40">
+                        <div class="flex justify-between items-start">
+                            <div class="w-20 h-20 bg-slate-800 rounded-2xl" id="previewLogo"></div>
+                            <div class="space-y-2 text-right">
+                                <div class="h-4 w-32 bg-slate-800 rounded ml-auto"></div>
+                                <div class="h-3 w-48 bg-slate-800 rounded ml-auto"></div>
+                            </div>
+                        </div>
+                        <div class="h-px bg-slate-800"></div>
+                        <div class="space-y-3">
+                            <div class="h-3 w-2/3 bg-slate-800 rounded"></div>
+                            <div class="h-3 w-1/2 bg-slate-800 rounded"></div>
+                        </div>
+                        <div class="pt-8 space-y-4">
+                            <div class="flex justify-between">
+                                <div class="h-4 w-1/3 bg-slate-800 rounded"></div>
+                                <div class="h-4 w-20 bg-slate-800 rounded"></div>
+                            </div>
+                            <div class="flex justify-between">
+                                <div class="h-4 w-1/3 bg-slate-800 rounded"></div>
+                                <div class="h-4 w-20 bg-slate-800 rounded"></div>
+                            </div>
+                        </div>
+                        <div class="pt-12 flex justify-end">
+                            <div class="h-10 w-32 bg-primary/20 border border-primary/30 rounded-xl"></div>
+                        </div>
+                    </div>
+
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent flex items-end p-8">
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500 italic">Live Workspace Preview</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script type="module">
+    import { GoogleGenAI, Type } from "https://esm.run/@google/genai";
+
+    window.toggleInvoiceMode = function(mode) {
+        const manual = document.getElementById('manualFields');
+        const ai = document.getElementById('aiMode');
+        const btnManual = document.getElementById('btnManual');
+        const btnAI = document.getElementById('btnAI');
+
+        if (mode === 'manual') {
+            manual.classList.remove('hidden');
+            ai.classList.add('hidden');
+            btnManual.classList.add('bg-white', 'shadow-sm', 'ring-1', 'ring-slate-200');
+            btnAI.classList.remove('bg-white', 'shadow-sm', 'ring-1', 'ring-slate-200');
+        } else {
+            manual.classList.add('hidden');
+            ai.classList.remove('hidden');
+            btnAI.classList.add('bg-white', 'shadow-sm', 'ring-1', 'ring-slate-200');
+            btnManual.classList.remove('bg-white', 'shadow-sm', 'ring-1', 'ring-slate-200');
+        }
+    }
+
+    const GEMINI_API_KEY = "<%= process.env.GEMINI_API_KEY %>";
+
+    window.generateAIInvoice = async function() {
+        const prompt = document.getElementById('aiPrompt').value;
+        if (!prompt) return alert('Please describe your work first.');
+
+        const btn = document.getElementById('generateBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Processing...';
+        lucide.createIcons();
+
+        try {
+            const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+            const response = await ai.models.generateContent({
+                model: "gemini-3-flash-preview",
+                contents: prompt,
+                config: {
+                    systemInstruction: "Extract invoice details from the prompt. Return JSON with 'clientName' (string) and 'items' (array of objects with 'description' (string) and 'amount' (number)).",
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            clientName: { type: Type.STRING },
+                            items: {
+                                type: Type.ARRAY,
+                                items: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        description: { type: Type.STRING },
+                                        amount: { type: Type.NUMBER }
+                                    },
+                                    required: ["description", "amount"]
+                                }
+                            }
+                        },
+                        required: ["clientName", "items"]
+                    }
+                }
+            });
+
+            const result = JSON.parse(response.text);
+            
+            // Populate manual fields and show them for review
+            document.getElementById('clientName').value = result.clientName;
+            const container = document.getElementById('itemsContainer');
+            container.innerHTML = '';
+            
+            result.items.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = 'flex gap-2';
+                div.innerHTML = `
+                    <input type="text" name="items[${idx}][description]" value="${item.description}" class="flex-1 bg-slate-50 border border-slate-100 rounded-lg px-3 py-3 text-xs">
+                    <input type="number" name="items[${idx}][amount]" value="${item.amount}" class="w-24 bg-slate-50 border border-slate-100 rounded-lg px-3 py-3 text-xs">
+                `;
+                container.appendChild(div);
+            });
+
+            window.toggleInvoiceMode('manual');
+        } catch (error) {
+            console.error('AI Error:', error);
+            alert('AI generation failed. Please try manual entry.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i data-lucide="sparkles" class="w-4 h-4"></i> Generate Draft';
+            lucide.createIcons();
+        }
+    }
+
+    <% if (step === 2) { %>
+    document.getElementById('logoInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('logoPreview').innerHTML = `<img src="${e.target.result}" class="w-full h-full object-contain p-2">`;
+                document.getElementById('previewLogo').style.backgroundImage = `url(${e.target.result})`;
+                document.getElementById('previewLogo').style.backgroundSize = 'contain';
+                document.getElementById('previewLogo').style.backgroundRepeat = 'no-repeat';
+                document.getElementById('previewLogo').style.backgroundPosition = 'center';
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+    <% } %>
+</script>
+
+<%- include('../partials/layout-footer') %>

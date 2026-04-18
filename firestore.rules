@@ -1,96 +1,78 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Catch-all deny
+    // 0. Catch-all deny
     match /{document=**} {
       allow read, write: if false;
     }
 
-    function isSignedIn() {
-      return request.auth != null;
+    // --- Helpers ---
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    
+    // --- Validation Helpers ---
+    
+    function isValidUser(data) {
+      return data.email is string && data.email.size() <= 200
+          && data.onboardingStatus in ['in-progress', 'completed']
+          && data.currentOnboardingStep is int
+          && data.currentOnboardingStep >= 1 && data.currentOnboardingStep <= 6;
     }
 
-    function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    function isValidBusiness(data) {
+      return data.ownerId == request.auth.uid
+          && (data.name == null || (data.name is string && data.name.size() <= 100))
+          && (data.currency == null || (data.currency is string && data.currency.size() <= 10))
+          && (data.paymentConfig == null || (data.paymentConfig.type in ['custom', 'platform']));
     }
 
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+    function isValidInvoice(data) {
+      return data.businessId is string 
+          && data.total is number 
+          && data.status in ['draft', 'sent', 'paid'];
     }
 
-    // --- User Rules ---
+    // --- Collection Routes ---
+
     match /users/{userId} {
       allow get: if isOwner(userId);
       allow create: if isOwner(userId) 
-        && request.resource.data.keys().hasAll(['email', 'createdAt'])
-        && request.resource.data.email == request.auth.token.email;
+          && isValidUser(incoming())
+          && incoming().onboardingStatus == 'in-progress'
+          && incoming().currentOnboardingStep == 1
+          && incoming().isVerified == false;
       allow update: if isOwner(userId)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'onboarded', 'activeWorkspace']);
+          && isValidUser(incoming())
+          && (
+            // Action: Increment step
+            (incoming().diff(existing()).affectedKeys().hasOnly(['currentOnboardingStep', 'updatedAt', 'onboardingStatus']))
+            || 
+            // Action: Verify Email (Usually via server, but allowing restricted update here if client-side logic sends token)
+            (incoming().diff(existing()).affectedKeys().hasOnly(['isVerified', 'updatedAt']))
+          );
+      allow delete: if false;
     }
 
-    // --- Workspace Rules ---
-    match /workspaces/{workspaceId} {
-      function isWorkspaceOwner(data) {
-        return data.ownerId == request.auth.uid;
-      }
-
-      allow get: if isWorkspaceOwner(resource.data);
+    match /businesses/{businessId} {
+      allow get: if isSignedIn() && existing().ownerId == request.auth.uid;
       allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
-      
       allow create: if isSignedIn() 
-        && request.resource.data.ownerId == request.auth.uid
-        && request.resource.data.keys().hasAll(['name', 'ownerId', 'plan', 'createdAt'])
-        && request.resource.data.plan == 'free'; // Default to free on create
-        
-      allow update: if isWorkspaceOwner(resource.data)
-        && request.resource.data.ownerId == resource.data.ownerId
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'name', 'logoUrl', 'currency', 'address', 'contactEmail', 
-            'taxId', 'paystackPublicKey', 'paystackSecretKey'
-           ]);
+          && isValidBusiness(incoming())
+          && isValidId(businessId);
+      allow update: if isSignedIn() 
+          && existing().ownerId == request.auth.uid
+          && isValidBusiness(incoming())
+          && incoming().ownerId == existing().ownerId; // Immortal field
+      allow delete: if isSignedIn() && existing().ownerId == request.auth.uid;
     }
 
-    // --- Invoice Rules ---
-    match /workspaces/{workspaceId}/invoices/{invoiceId} {
-      function canAccessWorkspace(wId) {
-        return get(/databases/$(database)/documents/workspaces/$(wId)).data.ownerId == request.auth.uid;
-      }
-
-      allow read: if isSignedIn() && canAccessWorkspace(workspaceId);
-      
-      allow create: if isSignedIn() 
-        && canAccessWorkspace(workspaceId)
-        && request.resource.data.workspaceId == workspaceId
-        && request.resource.data.keys().hasAll(['workspaceId', 'clientId', 'invoiceNumber', 'status', 'total', 'createdAt']);
-        
-      allow update: if isSignedIn()
-        && canAccessWorkspace(workspaceId)
-        && request.resource.data.workspaceId == resource.data.workspaceId
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'clientId', 'invoiceNumber', 'status', 'issueDate', 'dueDate', 
-            'items', 'subtotal', 'tax', 'discount', 'total', 'notes', 'templateId', 'updatedAt'
-           ]);
-
-      allow delete: if isSignedIn() && canAccessWorkspace(workspaceId);
-    }
-
-    // --- Client Rules ---
-    match /workspaces/{workspaceId}/clients/{clientId} {
-      function canAccessWorkspace(wId) {
-        return get(/databases/$(database)/documents/workspaces/$(wId)).data.ownerId == request.auth.uid;
-      }
-
-      allow read: if isSignedIn() && canAccessWorkspace(workspaceId);
-      
-      allow create: if isSignedIn()
-        && canAccessWorkspace(workspaceId)
-        && request.resource.data.workspaceId == workspaceId;
-        
-      allow update: if isSignedIn()
-        && canAccessWorkspace(workspaceId)
-        && request.resource.data.workspaceId == resource.data.workspaceId;
-
-      allow delete: if isSignedIn() && canAccessWorkspace(workspaceId);
+    match /businesses/{businessId}/invoices/{invoiceId} {
+      allow read: if isSignedIn() && get(/databases/$(database)/documents/businesses/$(businessId)).data.ownerId == request.auth.uid;
+      allow write: if isSignedIn() && get(/databases/$(database)/documents/businesses/$(businessId)).data.ownerId == request.auth.uid
+          && isValidInvoice(incoming());
     }
   }
 }

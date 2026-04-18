@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import routes from "./src/routes/index.js";
 import { checkAuth } from "./src/middleware/auth.js";
+import { enforceOnboarding } from "./src/middleware/onboardingMiddleware.js";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(checkAuth);
+app.use(enforceOnboarding);
 app.use(express.static(path.join(__dirname, "public")));
 
 // Routes

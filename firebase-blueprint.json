@@ -1,49 +1,59 @@
 {
   "entities": {
     "User": {
-      "title": "User Profile",
-      "description": "Information about a user account and their role.",
+      "title": "User",
+      "description": "User account and onboarding state",
       "type": "object",
       "properties": {
-        "email": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
         "displayName": { "type": "string" },
-        "onboarded": { "type": "boolean" },
-        "activeWorkspace": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "isVerified": { "type": "boolean" },
+        "onboardingStatus": { "type": "string", "enum": ["in-progress", "completed"] },
+        "currentOnboardingStep": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["email", "createdAt"]
+      "required": ["email", "onboardingStatus", "currentOnboardingStep"]
     },
-    "Workspace": {
-      "title": "Business Workspace",
-      "description": "Multi-tenant business container.",
+    "Business": {
+      "title": "Business",
+      "description": "Business profile and branding settings",
       "type": "object",
       "properties": {
-        "name": { "type": "string" },
         "ownerId": { "type": "string" },
-        "logoUrl": { "type": "string" },
-        "currency": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
         "address": { "type": "string" },
-        "contactEmail": { "type": "string" },
-        "taxId": { "type": "string" },
-        "paystackPublicKey": { "type": "string" },
-        "paystackSecretKey": { "type": "string" },
-        "plan": { "type": "string", "enum": ["free", "pro"] },
-        "aiCredits": { "type": "integer" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "currency": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "brandColors": {
+          "type": "object",
+          "properties": {
+            "primary": { "type": "string" },
+            "secondary": { "type": "string" }
+          }
+        },
+        "defaultTemplateId": { "type": "string" },
+        "paymentConfig": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "enum": ["custom", "platform"] },
+            "paystackPublicKey": { "type": "string" },
+            "paystackSecretKey": { "type": "string" }
+          }
+        }
       },
-      "required": ["name", "ownerId", "plan", "createdAt"]
+      "required": ["ownerId"]
     },
     "Invoice": {
       "title": "Invoice",
-      "description": "Structured invoice data.",
+      "description": "Invoice document",
       "type": "object",
       "properties": {
-        "workspaceId": { "type": "string" },
-        "clientId": { "type": "string" },
-        "invoiceNumber": { "type": "string" },
-        "status": { "type": "string", "enum": ["draft", "sent", "paid", "overdue"] },
-        "issueDate": { "type": "string", "format": "date" },
-        "dueDate": { "type": "string", "format": "date" },
+        "businessId": { "type": "string" },
+        "clientName": { "type": "string" },
+        "clientEmail": { "type": "string" },
         "items": {
           "type": "array",
           "items": {
@@ -51,54 +61,28 @@
             "properties": {
               "description": { "type": "string" },
               "quantity": { "type": "number" },
-              "unitPrice": { "type": "number" },
-              "total": { "type": "number" }
+              "price": { "type": "number" }
             }
           }
         },
-        "subtotal": { "type": "number" },
-        "tax": { "type": "number" },
-        "discount": { "type": "number" },
         "total": { "type": "number" },
-        "currency": { "type": "string" },
-        "notes": { "type": "string" },
-        "templateId": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["workspaceId", "clientId", "invoiceNumber", "status", "total", "createdAt"]
-    },
-    "Client": {
-      "title": "Client",
-      "description": "Business customer information.",
-      "type": "object",
-      "properties": {
-        "workspaceId": { "type": "string" },
-        "name": { "type": "string" },
-        "email": { "type": "string" },
-        "address": { "type": "string" },
-        "phone": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "sent", "paid"] },
         "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["workspaceId", "name", "createdAt"]
+      }
     }
   },
   "firestore": {
     "/users/{userId}": {
       "schema": "User",
-      "description": "Individual user accounts."
+      "description": "User profile with onboarding state"
     },
-    "/workspaces/{workspaceId}": {
-      "schema": "Workspace",
-      "description": "Business workspaces owned by users."
+    "/businesses/{businessId}": {
+      "schema": "Business",
+      "description": "Business settings owned by a user"
     },
-    "/workspaces/{workspaceId}/invoices/{invoiceId}": {
+    "/businesses/{businessId}/invoices/{invoiceId}": {
       "schema": "Invoice",
-      "description": "Invoices within a workspace."
-    },
-    "/workspaces/{workspaceId}/clients/{clientId}": {
-      "schema": "Client",
-      "description": "Clients within a workspace."
+      "description": "Invoices belonging to a business"
     }
   }
 }
