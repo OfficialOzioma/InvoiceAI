@@ -26,23 +26,29 @@ export const postOnboardingStep = async (req: Request, res: Response) => {
   const step = parseInt(req.params.step);
   const data = req.body;
   
-  // Persist current step data to session
   if (!(req.session as any).onboardingData) {
     (req.session as any).onboardingData = {};
   }
   
-  // Merge new data with existing session data
+  // Clean up numerical items if they exist to avoid object-like array structures
+  if (data.items) {
+    data.items = Object.values(data.items).filter((item: any) => item.description || item.amount);
+  }
+
+  // Merge new data
   (req.session as any).onboardingData = {
     ...(req.session as any).onboardingData,
     ...data
   };
 
-  console.log(`Onboarding Step ${step} Updated Data:`, (req.session as any).onboardingData);
-
-  if (step < 5) {
-    res.redirect(`/onboarding/step/${step + 1}`);
-  } else {
-    // Finish onboarding
-    res.redirect('/dashboard');
-  }
+  req.session.save((err) => {
+    if (err) console.error('Session save error:', err);
+    console.log(`Onboarding Step ${step} Persisted:`, (req.session as any).onboardingData);
+    
+    if (step < 5) {
+      res.redirect(`/onboarding/step/${step + 1}`);
+    } else {
+      res.redirect('/dashboard');
+    }
+  });
 };
