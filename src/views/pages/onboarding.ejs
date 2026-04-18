@@ -29,29 +29,29 @@
                         <div class="space-y-4">
                             <div class="space-y-2">
                                 <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Legal Business Name</label>
-                                <input type="text" name="businessName" required placeholder="Acme International" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all">
+                                <input type="text" name="businessName" value="<%= onboardingData.businessName || '' %>" required placeholder="Acme International" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all">
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="space-y-2">
                                     <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Business Email</label>
-                                    <input type="email" name="businessEmail" required placeholder="billing@acme.com" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all">
+                                    <input type="email" name="businessEmail" value="<%= onboardingData.businessEmail || '' %>" required placeholder="billing@acme.com" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all">
                                 </div>
                                 <div class="space-y-2">
                                     <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Phone Number</label>
-                                    <input type="tel" name="phone" required placeholder="+1 (555) 000-0000" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all">
+                                    <input type="tel" name="phone" value="<%= onboardingData.phone || '' %>" required placeholder="+1 (555) 000-0000" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all">
                                 </div>
                             </div>
                             <div class="space-y-2">
                                 <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Registration Address</label>
-                                <textarea name="address" required rows="3" placeholder="123 Business Way, Silicon Valley, CA" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all"></textarea>
+                                <textarea name="address" required rows="3" placeholder="123 Business Way, Silicon Valley, CA" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all"><%= onboardingData.address || '' %></textarea>
                             </div>
                             <div class="space-y-2">
                                 <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Default Currency</label>
                                 <select name="currency" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all appearance-none">
-                                    <option value="USD">USD - US Dollar</option>
-                                    <option value="NGN">NGN - Nigerian Naira</option>
-                                    <option value="EUR">EUR - Euro</option>
-                                    <option value="GBP">GBP - British Pound</option>
+                                    <option value="USD" <%= onboardingData.currency === 'USD' ? 'selected' : '' %>>$ - US Dollar</option>
+                                    <option value="EUR" <%= onboardingData.currency === 'EUR' ? 'selected' : '' %>>€ - Euro</option>
+                                    <option value="GBP" <%= onboardingData.currency === 'GBP' ? 'selected' : '' %>>£ - British Pound</option>
+                                    <option value="NGN" <%= onboardingData.currency === 'NGN' ? 'selected' : '' %>>₦ - Nigerian Naira</option>
                                 </select>
                             </div>
                         </div>
@@ -60,14 +60,26 @@
                         <div class="space-y-6">
                             <div class="space-y-4">
                                 <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Business Logo</label>
-                                <div class="flex items-center gap-6">
-                                    <div class="w-24 h-24 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center text-slate-400 overflow-hidden" id="logoPreview">
-                                        <i data-lucide="image" class="w-8 h-8"></i>
+                                <div class="flex flex-col gap-4">
+                                    <div class="flex items-center gap-6">
+                                        <div class="w-24 h-24 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center text-slate-400 overflow-hidden" id="logoPreview">
+                                            <% if (onboardingData.logoUrl) { %>
+                                                <img src="<%= onboardingData.logoUrl %>" class="w-full h-full object-contain p-2">
+                                            <% } else { %>
+                                                <i data-lucide="image" class="w-8 h-8"></i>
+                                            <% } %>
+                                        </div>
+                                        <div class="flex-1">
+                                            <input type="file" name="logo" id="logoInput" class="hidden" accept="image/*">
+                                            <button type="button" onclick="document.getElementById('logoInput').click()" class="bg-slate-100 text-secondary px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-200 transition-all w-full">Upload Logo</button>
+                                            <p class="text-[10px] text-slate-400 mt-2 font-medium">PNG, JPG up to 2MB</p>
+                                        </div>
                                     </div>
-                                    <div class="flex-1">
-                                        <input type="file" name="logo" id="logoInput" class="hidden" accept="image/*">
-                                        <button type="button" onclick="document.getElementById('logoInput').click()" class="bg-slate-100 text-secondary px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-200 transition-all">Upload Logo</button>
-                                        <p class="text-[10px] text-slate-400 mt-2 font-medium">PNG, JPG up to 2MB</p>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                            <i data-lucide="link" class="w-4 h-4 text-slate-400"></i>
+                                        </div>
+                                        <input type="url" name="logoUrl" id="logoUrlInput" value="<%= onboardingData.logoUrl || '' %>" placeholder="Or paste logo URL (https://...)" class="w-full bg-slate-50 border border-slate-100 rounded-xl pl-11 pr-4 py-4 text-sm outline-none focus:border-primary transition-all">
                                     </div>
                                 </div>
                             </div>
@@ -75,16 +87,16 @@
                                 <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Brand Colors</label>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="relative">
-                                        <input type="color" name="colorPrimary" value="#3B82F6" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                                        <input type="color" name="colorPrimary" value="<%= onboardingData.colorPrimary || '#3B82F6' %>" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
                                         <div class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm flex items-center gap-3">
-                                            <div class="w-5 h-5 rounded-full border border-slate-200" style="background-color: #3B82F6"></div>
+                                            <div id="colorPrimaryDisplay" class="w-5 h-5 rounded-full border border-slate-200" style="background-color: <%= onboardingData.colorPrimary || '#3B82F6' %>"></div>
                                             <span class="font-bold text-xs uppercase">Primary</span>
                                         </div>
                                     </div>
                                     <div class="relative">
-                                        <input type="color" name="colorSecondary" value="#0F172A" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                                        <input type="color" name="colorSecondary" value="<%= onboardingData.colorSecondary || '#0F172A' %>" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
                                         <div class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm flex items-center gap-3">
-                                            <div class="w-5 h-5 rounded-full border border-slate-200" style="background-color: #0F172A"></div>
+                                            <div id="colorSecondaryDisplay" class="w-5 h-5 rounded-full border border-slate-200" style="background-color: <%= onboardingData.colorSecondary || '#0F172A' %>"></div>
                                             <span class="font-bold text-xs uppercase">Secondary</span>
                                         </div>
                                     </div>
@@ -95,16 +107,25 @@
                         <!-- Step 3: Template Selection -->
                         <div class="grid grid-cols-2 gap-4">
                             <label class="relative cursor-pointer group">
-                                <input type="radio" name="templateId" value="modern" checked class="absolute opacity-0">
+                                <input type="radio" name="templateId" value="modern" <%= (onboardingData.templateId || 'modern') === 'modern' ? 'checked' : '' %> class="absolute opacity-0">
                                 <div class="border-2 border-slate-100 rounded-2xl p-4 transition-all group-has-[:checked]:border-primary group-has-[:checked]:bg-blue-50/50">
-                                    <div class="aspect-[3/4] bg-slate-100 rounded-lg mb-3"></div>
+                                    <div class="aspect-[3/4] bg-slate-100 rounded-lg mb-3 flex items-center justify-center">
+                                        <div class="w-12 h-16 bg-white shadow-sm rounded border border-slate-200 rotate-1 flex flex-col p-2 space-y-1">
+                                            <div class="h-1 w-full bg-slate-100 rounded"></div>
+                                            <div class="h-1 w-2/3 bg-slate-100 rounded"></div>
+                                        </div>
+                                    </div>
                                     <span class="text-[10px] font-black uppercase tracking-widest">The Modernist</span>
                                 </div>
                             </label>
                             <label class="relative cursor-pointer group">
-                                <input type="radio" name="templateId" value="minimal" class="absolute opacity-0">
+                                <input type="radio" name="templateId" value="minimal" <%= onboardingData.templateId === 'minimal' ? 'checked' : '' %> class="absolute opacity-0">
                                 <div class="border-2 border-slate-100 rounded-2xl p-4 transition-all group-has-[:checked]:border-primary group-has-[:checked]:bg-blue-50/50">
-                                    <div class="aspect-[3/4] bg-slate-100 rounded-lg mb-3"></div>
+                                    <div class="aspect-[3/4] bg-slate-100 rounded-lg mb-3 flex items-center justify-center">
+                                        <div class="w-12 h-16 bg-white shadow-sm rounded border border-slate-200 flex flex-col items-center justify-center text-[6px] font-black opacity-40">
+                                            SWISS
+                                        </div>
+                                    </div>
                                     <span class="text-[10px] font-black uppercase tracking-widest">Swiss Minimal</span>
                                 </div>
                             </label>
@@ -157,13 +178,18 @@
                                     <input type="text" name="clientName" id="clientName" placeholder="John Doe" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all">
                                 </div>
                                 <div class="space-y-2">
-                                    <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Line Items</label>
+                                    <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Line Items (Add at least 4)</label>
                                     <div id="itemsContainer" class="space-y-2">
-                                        <div class="flex gap-2">
-                                            <input type="text" name="items[0][description]" placeholder="Item name" class="flex-1 bg-slate-50 border border-slate-100 rounded-lg px-3 py-3 text-xs">
-                                            <input type="number" name="items[0][amount]" placeholder="Price" class="w-24 bg-slate-50 border border-slate-100 rounded-lg px-3 py-3 text-xs">
-                                        </div>
+                                        <% for(let i = 0; i < 4; i++) { %>
+                                            <div class="flex gap-2">
+                                                <input type="text" name="items[<%= i %>][description]" placeholder="Item name" class="flex-1 bg-slate-50 border border-slate-100 rounded-lg px-3 py-3 text-xs">
+                                                <input type="number" name="items[<%= i %>][amount]" placeholder="Price" class="w-24 bg-slate-50 border border-slate-100 rounded-lg px-3 py-3 text-xs">
+                                            </div>
+                                        <% } %>
                                     </div>
+                                    <button type="button" onclick="addInvoiceItem()" class="text-[10px] font-bold text-primary flex items-center gap-1 mt-2">
+                                        <i data-lucide="plus" class="w-3 h-3"></i> Add More Items
+                                    </button>
                                 </div>
                             </div>
 
@@ -202,37 +228,43 @@
                     </div>
                     
                     <div class="mt-8 space-y-6">
-                        <div class="flex justify-between items-start">
-                            <div class="w-20 h-20 bg-slate-800 rounded-2xl flex items-center justify-center overflow-hidden" id="previewLogo">
-                                <i data-lucide="image" class="w-8 h-8 text-slate-700"></i>
-                            </div>
-                            <div class="space-y-1 text-right max-w-[60%]">
-                                <div id="previewBusinessName" class="text-sm font-black text-white truncate h-5">Company Name</div>
-                                <div id="previewAddress" class="text-[10px] text-slate-500 line-clamp-2 h-8">Street Address, City</div>
-                            </div>
-                        </div>
-                        <div class="h-px bg-slate-800"></div>
-                        <div class="space-y-4">
-                            <div class="flex justify-between items-center">
-                                <span class="text-[10px] uppercase font-bold text-slate-500">Bill To:</span>
-                                <span id="previewClientName" class="text-[10px] font-bold text-slate-300">Client Name</span>
-                            </div>
-                            <div id="previewItems" class="space-y-2">
-                                <div class="flex justify-between text-[10px] text-slate-400">
-                                    <div class="h-3 w-1/2 bg-slate-800 rounded"></div>
-                                    <div class="h-3 w-8 bg-slate-800 rounded"></div>
+                        <div id="previewContainer" class="transition-all duration-500">
+                            <div class="flex justify-between items-start">
+                                <div class="w-20 h-20 bg-slate-800 rounded-2xl flex items-center justify-center overflow-hidden" id="previewLogo">
+                                    <% if (onboardingData.logoUrl) { %>
+                                        <img src="<%= onboardingData.logoUrl %>" class="w-full h-full object-contain p-2">
+                                    <% } else { %>
+                                        <i data-lucide="image" class="w-8 h-8 text-slate-700"></i>
+                                    <% } %>
+                                </div>
+                                <div class="space-y-1 text-right max-w-[60%]">
+                                    <div id="previewBusinessName" class="text-sm font-black text-white truncate h-5"><%= onboardingData.businessName || 'Company Name' %></div>
+                                    <div id="previewAddress" class="text-[10px] text-slate-500 line-clamp-2 h-8"><%= onboardingData.address || 'Street Address, City' %></div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="pt-8 space-y-4">
-                            <div class="flex justify-between border-t border-slate-800 pt-4">
-                                <span class="text-[10px] font-bold text-slate-500">Total</span>
-                                <span id="previewTotal" class="text-sm font-black text-white">$0.00</span>
+                            <div class="h-px bg-slate-800 my-6"></div>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[10px] uppercase font-bold text-slate-500">Bill To:</span>
+                                    <span id="previewClientName" class="text-[10px] font-bold text-slate-300">Client Name</span>
+                                </div>
+                                <div id="previewItems" class="space-y-2">
+                                    <div id="previewItemsPlaceholder" class="flex justify-between text-[10px] text-slate-400">
+                                        <div class="h-3 w-1/2 bg-slate-800 rounded"></div>
+                                        <div class="h-3 w-8 bg-slate-800 rounded"></div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="pt-8 flex justify-end">
-                            <div id="previewButton" class="h-10 px-6 bg-primary/20 border border-primary/30 rounded-xl flex items-center justify-center">
-                                <span class="text-[10px] font-black uppercase tracking-widest text-primary">Pay Invoice</span>
+                            <div class="pt-8 space-y-4">
+                                <div class="flex justify-between border-t border-slate-800 pt-4">
+                                    <span class="text-[10px] font-bold text-slate-500">Total</span>
+                                    <span id="previewTotal" class="text-sm font-black text-white">$0.00</span>
+                                </div>
+                            </div>
+                            <div class="pt-8 flex justify-end">
+                                <div id="previewButton" class="h-10 px-6 bg-primary/20 border border-primary/30 rounded-xl flex items-center justify-center">
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-primary">Pay Invoice</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -280,15 +312,42 @@
         const address = formData.get('address');
         const currency = formData.get('currency') || 'USD';
         
+        const currencyMap = { 'USD': '$', 'EUR': '€', 'GBP': '£', 'NGN': '₦' };
+        const symbol = currencyMap[currency] || '$';
+
         if (businessName) document.getElementById('previewBusinessName').innerText = businessName;
         if (address) document.getElementById('previewAddress').innerText = address;
 
-        // Step 2 values (Colors)
-        const primary = formData.get('colorPrimary');
-        if (primary) {
-            document.getElementById('previewButton').style.borderColor = `${primary}4D`; // 30% opacity
-            document.getElementById('previewButton').style.backgroundColor = `${primary}1A`; // 10% opacity
-            document.getElementById('previewButton').querySelector('span').style.color = primary;
+        // Step 2 values (Logo & Colors)
+        const colors = {
+            primary: formData.get('colorPrimary'),
+            secondary: formData.get('colorSecondary')
+        };
+
+        if (colors.primary) {
+            document.getElementById('colorPrimaryDisplay').style.backgroundColor = colors.primary;
+            document.getElementById('previewButton').style.borderColor = `${colors.primary}4D`;
+            document.getElementById('previewButton').style.backgroundColor = `${colors.primary}1A`;
+            document.getElementById('previewButton').querySelector('span').style.color = colors.primary;
+        }
+        if (colors.secondary) {
+            document.getElementById('colorSecondaryDisplay').style.backgroundColor = colors.secondary;
+        }
+
+        const logoUrl = formData.get('logoUrl');
+        if (logoUrl) {
+            document.getElementById('previewLogo').innerHTML = `<img src="${logoUrl}" class="w-full h-full object-contain p-2">`;
+        }
+
+        // Step 3 values (Template)
+        const template = formData.get('templateId');
+        const container = document.getElementById('previewContainer');
+        if (template === 'minimal') {
+            container.classList.add('flex', 'flex-col', 'items-center', 'text-center');
+            document.getElementById('previewLogo').classList.add('mx-auto');
+        } else {
+            container.classList.remove('flex', 'flex-col', 'items-center', 'text-center');
+            document.getElementById('previewLogo').classList.remove('mx-auto');
         }
 
         // Step 5 values
@@ -297,25 +356,44 @@
 
         // Calculate Items and Total
         let total = 0;
-        const itemsContainer = document.getElementById('previewItems');
+        const itemsPreview = document.getElementById('previewItems');
         const itemRows = document.querySelectorAll('#itemsContainer .flex');
         
         if (itemRows.length > 0) {
-            itemsContainer.innerHTML = '';
+            let hasItems = false;
+            let itemsHtml = '';
             itemRows.forEach(row => {
                 const desc = row.querySelector('input[name*="[description]"]')?.value;
                 const amt = parseFloat(row.querySelector('input[name*="[amount]"]')?.value) || 0;
                 
-                if (desc || amt) {
-                    const div = document.createElement('div');
-                    div.className = 'flex justify-between text-[10px] text-slate-400';
-                    div.innerHTML = `<span>${desc || 'Item'}</span><span>${new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amt)}</span>`;
-                    itemsContainer.appendChild(div);
+                if (desc || amt > 0) {
+                    hasItems = true;
+                    itemsHtml += `<div class="flex justify-between text-[10px] text-slate-400"><span>${desc || 'Item'}</span><span>${symbol}${amt.toLocaleString()}</span></div>`;
                     total += amt;
                 }
             });
-            document.getElementById('previewTotal').innerText = new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(total);
+
+            if (hasItems) {
+                itemsPreview.innerHTML = itemsHtml;
+                document.getElementById('previewTotal').innerText = `${symbol}${total.toLocaleString()}`;
+            }
         }
+    };
+
+    window.addInvoiceItem = function() {
+        const container = document.getElementById('itemsContainer');
+        const idx = container.querySelectorAll('.flex').length;
+        const div = document.createElement('div');
+        div.className = 'flex gap-2';
+        div.innerHTML = `
+            <input type="text" name="items[${idx}][description]" placeholder="Item name" class="flex-1 bg-slate-50 border border-slate-100 rounded-xl px-3 py-3 text-xs outline-none focus:border-primary">
+            <input type="number" name="items[${idx}][amount]" placeholder="Price" class="w-24 bg-slate-50 border border-slate-100 rounded-xl px-3 py-3 text-xs outline-none focus:border-primary">
+        `;
+        container.appendChild(div);
+        
+        div.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', updatePreview);
+        });
     };
 
     // Attach listeners to all inputs
