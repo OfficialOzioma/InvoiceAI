@@ -1,8 +1,12 @@
 import { Request, Response } from 'express';
-import { adminDb } from '../lib/firebaseAdmin.js';
+
+const MOCK_INVOICES = [
+  { id: 'INV-001', invoiceNumber: 'INV-2026-001', clientName: 'Globex Corp', total: '1,450.00', status: 'Paid', createdAt: new Date() },
+  { id: 'INV-002', invoiceNumber: 'INV-2026-002', clientName: 'Initech', total: '3,200.00', status: 'Pending', createdAt: new Date() },
+  { id: 'INV-003', invoiceNumber: 'INV-2026-003', clientName: 'Umbrella Corp', total: '850.00', status: 'Overdue', createdAt: new Date() }
+];
 
 export const getDashboard = async (req: Request, res: Response) => {
-  // Mocking auth check for now, in a real app would use a middleware
   const user = (req as any).user;
   
   if (!user) {
@@ -10,21 +14,8 @@ export const getDashboard = async (req: Request, res: Response) => {
   }
 
   try {
-    const userDoc = await adminDb.collection('users').doc(user.uid).get();
-    const userData = userDoc.data();
-    const activeWorkspaceId = userData?.activeWorkspace;
-    
-    let invoices: any[] = [];
-    if (activeWorkspaceId) {
-       const invSnap = await adminDb.collection('workspaces')
-        .doc(activeWorkspaceId)
-        .collection('invoices')
-        .orderBy('createdAt', 'desc')
-        .limit(5)
-        .get();
-        
-       invoices = invSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    }
+    const activeWorkspaceId = 'mock-workspace-id';
+    const invoices = MOCK_INVOICES;
 
     res.render('pages/dashboard', {
       title: 'Dashboard | InvoiceAI',
