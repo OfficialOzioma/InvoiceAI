@@ -4,6 +4,18 @@ export const getLogin = (req: Request, res: Response) => {
   res.render('pages/login', { title: 'Log In | InvoiceAI' });
 };
 
+export const getSignup = (req: Request, res: Response) => {
+  res.render('pages/signup', { title: 'Sign Up | InvoiceAI' });
+};
+
+export const getForgotPassword = (req: Request, res: Response) => {
+  res.render('pages/forgot-password', { title: 'Forgot Password | InvoiceAI' });
+};
+
+export const getVerifyOtp = (req: Request, res: Response) => {
+  res.render('pages/verify-otp', { title: 'Verify Email | InvoiceAI' });
+};
+
 export const postLogin = async (req: Request, res: Response) => {
   // Simplified login for this migration demo
   // In a real app, verify with Firebase Admin
