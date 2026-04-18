@@ -1,20 +1,18 @@
 import { Request, Response } from 'express';
-import { adminDb } from '../lib/firebaseAdmin.js';
 import { generateInvoiceDraft } from '../services/geminiService.js';
+
+const MOCK_INVOICES = [
+  { id: 'INV-001', invoiceNumber: 'INV-2026-001', clientName: 'Globex Corp', total: '1,450.00', status: 'Paid', createdAt: new Date() },
+  { id: 'INV-002', invoiceNumber: 'INV-2026-002', clientName: 'Initech', total: '3,200.00', status: 'Pending', createdAt: new Date() },
+  { id: 'INV-003', invoiceNumber: 'INV-2026-003', clientName: 'Umbrella Corp', total: '850.00', status: 'Overdue', createdAt: new Date() }
+];
 
 export const getInvoices = async (req: Request, res: Response) => {
   const user = (req as any).user;
   if (!user) return res.redirect('/login');
 
   try {
-    const userDoc = await adminDb.collection('users').doc(user.uid).get();
-    const activeWId = userDoc.data()?.activeWorkspace;
-
-    let invoices: any[] = [];
-    if (activeWId) {
-      const snap = await adminDb.collection('workspaces').doc(activeWId).collection('invoices').orderBy('createdAt', 'desc').get();
-      invoices = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    }
+    const invoices = MOCK_INVOICES;
 
     res.render('pages/invoices', { title: 'Ledger | InvoiceAI', layout: 'dashboard-layout', invoices });
   } catch (error) {
