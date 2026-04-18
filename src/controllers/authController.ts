@@ -24,12 +24,12 @@ export const postSignup = async (req: Request, res: Response) => {
   // 2. Create entry in Firestore: { email, onboardingStatus: 'in-progress', currentOnboardingStep: 1, isVerified: provider === 'google' }
   
   if (provider === 'google') {
-    res.cookie('session', 'mock-google-session', { httpOnly: true });
+    res.cookie('session', 'mock-google-session', { httpOnly: true, secure: true, sameSite: 'none' });
     return res.redirect('/onboarding/step/1');
   }
 
   // Email path: send OTP and verify
-  res.cookie('session', 'temp-session', { httpOnly: true });
+  res.cookie('session', 'temp-session', { httpOnly: true, secure: true, sameSite: 'none' });
   res.redirect('/verify-otp');
 };
 
@@ -46,7 +46,7 @@ export const postLogin = async (req: Request, res: Response) => {
   
   if (email === 'admin@invoiceai.com' && password === 'password123') {
      // Set a session cookie (mocked for now)
-     res.cookie('session', 'mock-session-id', { httpOnly: true, secure: true });
+     res.cookie('session', 'mock-session-id', { httpOnly: true, secure: true, sameSite: 'none' });
      return res.redirect('/dashboard');
   }
   

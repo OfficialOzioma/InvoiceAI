@@ -4,10 +4,23 @@ import { Request, Response, NextFunction } from 'express';
 // In a real app, this would use the Firebase Admin SDK
 export const enforceOnboarding = async (req: Request, res: Response, next: NextFunction) => {
   const session = req.cookies.session;
-  const publicPaths = ['/login', '/signup', '/forgot-password', '/', '/css', '/js', '/images'];
+  const publicPaths = [
+    '/login', 
+    '/signup', 
+    '/forgot-password', 
+    '/verify-otp',
+    '/', 
+    '/css', 
+    '/js', 
+    '/images',
+    '/auth/login',
+    '/auth/signup',
+    '/auth/verify-otp',
+    '/auth/logout'
+  ];
 
   // Check if current path is public or an asset
-  const isPublic = publicPaths.some(path => req.path === path || req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/images/'));
+  const isPublic = publicPaths.some(path => req.path === path || req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/images/') || req.path.startsWith('/auth/'));
 
   if (isPublic) {
     return next();
