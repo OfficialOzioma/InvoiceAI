@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        @media print {
+            body { background: white; }
+            .no-print { display: none !important; }
+            .print-shadow-none { box-shadow: none !important; border: none !important; }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen py-10 px-4 flex justify-center">
+
+    <div class="w-full max-w-3xl space-y-6">
+        <!-- Top Action Bar (Hidden in Print) -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex items-center justify-between no-print">
+            <div class="flex items-center gap-3">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest
+                          <%= invoice.status === 'Paid' ? 'bg-emerald-50 text-emerald-600' : 
+                              invoice.status === 'Pending' ? 'bg-amber-50 text-amber-600' : 
+                              invoice.status === 'Draft' ? 'bg-slate-100 text-slate-600' : 'bg-rose-50 text-rose-600' %>">
+                    <%= invoice.status %>
+                </span>
+                <span class="text-sm font-medium text-slate-500">
+                    <%= invoice.status === 'Paid' ? 'This invoice has been paid.' : 'Payment is due by ' + new Date(invoice.dueDate).toLocaleDateString() + '.' %>
+                </span>
+            </div>
+            <div class="flex items-center gap-3">
+                <% if(invoice.status !== 'Paid' && invoice.status !== 'Draft') { %>
+                    <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg text-sm font-bold shadow-md transition-colors flex items-center gap-2" onclick="alert('Proceeding to payment gateway...')">
+                        <i data-lucide="credit-card" class="w-4 h-4"></i> Pay Now
+                    </button>
+                <% } %>
+                <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-2" onclick="window.print()">
+                    <i data-lucide="printer" class="w-4 h-4"></i> Print
+                </button>
+            </div>
+        </div>
+
+        <!-- Invoice Document -->
+        <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-10 sm:p-14 print-shadow-none relative overflow-hidden">
+            <!-- Decorative Header Banner -->
+            <div class="absolute top-0 left-0 w-full h-2 bg-indigo-600"></div>
+
+            <!-- Header: Company & Client -->
+            <div class="flex flex-col sm:flex-row justify-between items-start gap-8 border-b border-slate-100 pb-10">
+                <div class="space-y-6">
+                    <!-- Company Branding -->
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-xl shadow-md">
+                            IN
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-black tracking-tight text-slate-900">InvoiceAI Inc.</h1>
+                            <p class="text-xs text-slate-500 mt-0.5">100 Tech Blvd, San Francisco, CA</p>
+                        </div>
+                    </div>
+
+                    <!-- Client Details -->
+                    <div>
+                        <h3 class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Billed To</h3>
+                        <p class="font-bold text-slate-900 text-lg"><%= invoice.clientName %></p>
+                        <p class="text-sm text-slate-500 mt-1"><%= invoice.email %></p>
+                    </div>
+                </div>
+
+                <div class="text-left sm:text-right space-y-6">
+                    <div>
+                        <h2 class="text-4xl font-black text-slate-900 tracking-tighter mb-1">INVOICE</h2>
+                        <p class="font-bold text-slate-400 mono">#<%= invoice.invoiceNumber %></p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-x-8 gap-y-4">
+                        <div>
+                            <h3 class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Issue Date</h3>
+                            <p class="text-sm font-medium text-slate-900"><%= new Date(invoice.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
+                        </div>
+                        <div>
+                            <h3 class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Due Date</h3>
+                            <p class="text-sm font-medium text-slate-900"><%= new Date(invoice.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Line Items Table -->
+            <div class="py-10 border-b border-slate-100">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr>
+                            <th class="pb-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 border-b border-slate-100">Description</th>
+                            <th class="pb-4 px-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 border-b border-slate-100 text-right">Qty</th>
+                            <th class="pb-4 px-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 border-b border-slate-100 text-right">Price</th>
+                            <th class="pb-4 pl-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 border-b border-slate-100 text-right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50">
+                        <% invoice.lineItems.forEach(item => { %>
+                            <tr>
+                                <td class="py-5 font-medium text-slate-800"><%= item.description %></td>
+                                <td class="py-5 px-4 text-right text-slate-500 font-medium"><%= item.quantity %></td>
+                                <td class="py-5 px-4 text-right text-slate-500 font-medium mono">$<%= item.price %></td>
+                                <td class="py-5 pl-4 text-right text-slate-900 font-bold mono">$<%= item.amount %></td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer: Summary & Notes -->
+            <div class="pt-8 flex flex-col sm:flex-row justify-between items-start gap-10">
+                <div class="w-full sm:w-1/2">
+                    <% if(invoice.notes || invoice.terms) { %>
+                        <div class="text-sm text-slate-500 bg-slate-50 rounded-xl p-5 border border-slate-100">
+                            <% if(invoice.notes) { %>
+                                <div class="mb-4">
+                                    <strong class="block text-[10px] uppercase tracking-widest text-slate-400 mb-1.5">Notes</strong>
+                                    <%= invoice.notes %>
+                                </div>
+                            <% } %>
+                            <% if(invoice.terms) { %>
+                                <div>
+                                    <strong class="block text-[10px] uppercase tracking-widest text-slate-400 mb-1.5">Terms</strong>
+                                    <%= invoice.terms %>
+                                </div>
+                            <% } %>
+                        </div>
+                    <% } %>
+                </div>
+
+                <div class="w-full sm:w-72 space-y-4 text-sm">
+                    <div class="flex justify-between text-slate-500 font-medium">
+                        <span>Subtotal</span>
+                        <span class="mono">$<%= invoice.subtotal %></span>
+                    </div>
+                    <div class="flex justify-between text-slate-500 font-medium pb-4 border-b border-slate-100">
+                        <span>Tax</span>
+                        <span class="mono">$<%= invoice.tax %></span>
+                    </div>
+                    <div class="flex justify-between font-black text-2xl text-slate-900 items-center">
+                        <span class="text-sm uppercase tracking-widest text-slate-400">Total Due</span>
+                        <span class="mono tracking-tight text-indigo-600">$<%= invoice.total %></span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        
+        <script>
+            lucide.createIcons();
+        </script>
+    </div>
+
+</body>
+</html>

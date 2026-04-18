@@ -2,11 +2,52 @@ import { Request, Response } from 'express';
 import { generateInvoiceDraft } from '../services/geminiService.js';
 
 export let INVOICES_DB = [
-  { id: 'INV-001', invoiceNumber: 'INV-2026-001', clientName: 'Globex Corp', total: '1,450.00', status: 'Paid', createdAt: new Date() },
-  { id: 'INV-002', invoiceNumber: 'INV-2026-002', clientName: 'Initech', total: '3,200.00', status: 'Pending', createdAt: new Date() },
-  { id: 'INV-003', invoiceNumber: 'INV-2026-003', clientName: 'Umbrella Corp', total: '850.00', status: 'Overdue', createdAt: new Date() },
-  { id: 'INV-004', invoiceNumber: 'INV-2026-004', clientName: 'Stark Industries', total: '12,500.00', status: 'Paid', createdAt: new Date() },
-  { id: 'INV-005', invoiceNumber: 'INV-2026-005', clientName: 'Wayne Enterprises', total: '4,500.00', status: 'Draft', createdAt: new Date() }
+  { 
+    id: 'INV-001', invoiceNumber: 'INV-2026-001', clientName: 'Globex Corp', email: 'billing@globex.com', 
+    total: '1,450.00', subtotal: '1,350.00', tax: '100.00', status: 'Paid', 
+    createdAt: new Date('2026-04-10'), dueDate: new Date('2026-04-24'),
+    notes: 'Thank you for your business.', terms: 'Net 14',
+    lineItems: [
+        { description: 'Consulting Services', quantity: 10, price: '100.00', amount: '1,000.00' },
+        { description: 'Server Setup', quantity: 1, price: '350.00', amount: '350.00' }
+    ]
+  },
+  { 
+    id: 'INV-002', invoiceNumber: 'INV-2026-002', clientName: 'Initech', email: 'accounts@initech.com', 
+    total: '3,200.00', subtotal: '3,200.00', tax: '0.00', status: 'Pending', 
+    createdAt: new Date('2026-04-15'), dueDate: new Date('2026-05-15'),
+    notes: 'Please remit payment within 30 days.', terms: 'Net 30',
+    lineItems: [
+        { description: 'Web Application Development', quantity: 1, price: '3,200.00', amount: '3,200.00' }
+    ]
+  },
+  { 
+    id: 'INV-003', invoiceNumber: 'INV-2026-003', clientName: 'Umbrella Corp', email: 'finance@umbrellacorp.com', 
+    total: '850.00', subtotal: '800.00', tax: '50.00', status: 'Overdue', 
+    createdAt: new Date('2026-03-01'), dueDate: new Date('2026-03-15'),
+    notes: 'Late fee of 5% applies after due date.', terms: 'Net 14',
+    lineItems: [
+        { description: 'Security Audit', quantity: 1, price: '800.00', amount: '800.00' }
+    ]
+  },
+  { 
+    id: 'INV-004', invoiceNumber: 'INV-2026-004', clientName: 'Stark Industries', email: 'stark@starkindustries.com', 
+    total: '12,500.00', subtotal: '12,500.00', tax: '0.00', status: 'Paid', 
+    createdAt: new Date('2026-04-05'), dueDate: new Date('2026-05-05'),
+    notes: 'Project Titan Phase 1.', terms: 'Net 30',
+    lineItems: [
+        { description: 'Arc Reactor Implementation', quantity: 1, price: '12,500.00', amount: '12,500.00' }
+    ]
+  },
+  { 
+    id: 'INV-005', invoiceNumber: 'INV-2026-005', clientName: 'Wayne Enterprises', email: 'ap@wayne.com', 
+    total: '4,500.00', subtotal: '4,000.00', tax: '500.00', status: 'Draft', 
+    createdAt: new Date('2026-04-18'), dueDate: new Date('2026-05-18'),
+    notes: 'R&D Consultation.', terms: 'Net 30',
+    lineItems: [
+        { description: 'Tactical Gear Design', quantity: 20, price: '200.00', amount: '4,000.00' }
+    ]
+  }
 ];
 
 export const getInvoices = async (req: Request, res: Response) => {
@@ -57,7 +98,20 @@ export const deleteInvoice = (req: Request, res: Response) => {
 };
 
 export const getBuilder = (req: Request, res: Response) => {
-  res.render('pages/invoiceBuilder', { title: 'Builder | InvoiceAI', layout: 'dashboard-layout' });
+  // Creating a new invoice, send a null invoice object to signal it's "new"
+  res.render('pages/invoiceBuilder', { title: 'Builder | InvoiceAI', layout: 'dashboard-layout', editInvoice: null });
+};
+
+export const getEditBuilder = (req: Request, res: Response) => {
+  const invoice = INVOICES_DB.find(i => i.id === req.params.id);
+  if (!invoice) return res.status(404).send('Not Found');
+  res.render('pages/invoiceBuilder', { title: 'Edit Invoice | InvoiceAI', layout: 'dashboard-layout', editInvoice: invoice });
+};
+
+export const getPublicInvoice = (req: Request, res: Response) => {
+  const invoice = INVOICES_DB.find(i => i.id === req.params.id);
+  if (!invoice) return res.status(404).send('Not Found');
+  res.render('pages/public-invoice', { title: `Invoice ${invoice.invoiceNumber}`, layout: false, invoice });
 };
 
 export const createAiDraft = async (req: Request, res: Response) => {

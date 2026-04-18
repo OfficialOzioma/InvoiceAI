@@ -1,15 +1,20 @@
-<div class="max-w-4xl mx-auto py-8">
-  <div class="mb-6">
+<div class="max-w-4xl mx-auto py-8 px-4 sm:px-0">
+  <div class="mb-6 flex items-center justify-between">
     <a href="/invoices" class="flex items-center text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors">
       <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Back to Ledger
     </a>
+    
+    <a href="/invoices/edit/<%= invoice.id %>" class="px-3 py-1.5 bg-white text-slate-600 rounded-lg text-xs font-bold shadow-sm border border-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-1.5">
+        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Edit
+    </a>
   </div>
   
-  <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
-    <div class="flex justify-between items-start mb-8">
+  <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 sm:p-10 mb-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start mb-10 gap-6">
       <div>
         <h1 class="text-3xl font-black text-slate-900 mb-2"><%= invoice.clientName %></h1>
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3">
           <span class="text-sm font-bold text-slate-500 uppercase tracking-widest"><%= invoice.invoiceNumber %></span>
           <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest
                           <%= invoice.status === 'Paid' ? 'bg-emerald-50 text-emerald-600' : 
@@ -19,22 +24,107 @@
           </span>
         </div>
       </div>
-      <div class="text-right">
-        <div class="text-sm text-slate-500 font-bold uppercase tracking-widest mb-1">Amount Due</div>
+      <div class="text-left sm:text-right">
+        <div class="text-sm text-slate-500 font-bold uppercase tracking-widest mb-1">Total Due</div>
         <div class="text-4xl font-black text-slate-900 tracking-tight">$<%= invoice.total %></div>
       </div>
     </div>
     
-    <div class="border-t border-slate-100 pt-8 mt-8 grid grid-cols-2 gap-8 text-sm">
-      <div>
-        <h3 class="font-bold text-slate-400 uppercase tracking-widest mb-3 text-[10px]">Billed To</h3>
-        <p class="font-semibold text-slate-900"><%= invoice.clientName %></p>
-        <p class="text-slate-500 mt-1">123 Business Rd.<br/>Metropolis, NY 10001</p>
+    <!-- Meta -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 border-t border-slate-100 pt-8 mb-10 text-sm">
+      <div class="col-span-2">
+        <h3 class="font-bold text-slate-400 uppercase tracking-widest mb-2 text-[10px]">Billed To</h3>
+        <p class="font-bold text-slate-900 text-base"><%= invoice.clientName %></p>
+        <p class="text-slate-500 mt-1"><%= invoice.email %></p>
       </div>
       <div>
-        <h3 class="font-bold text-slate-400 uppercase tracking-widest mb-3 text-[10px]">Date of Issue</h3>
+        <h3 class="font-bold text-slate-400 uppercase tracking-widest mb-2 text-[10px]">Issue Date</h3>
         <p class="font-semibold text-slate-900"><%= new Date(invoice.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
       </div>
+      <div>
+        <h3 class="font-bold text-slate-400 uppercase tracking-widest mb-2 text-[10px]">Due Date</h3>
+        <p class="font-semibold text-slate-900"><%= new Date(invoice.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
+      </div>
     </div>
+
+    <!-- Line Items Table -->
+    <div class="border-t border-slate-100 pt-8">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm mb-6">
+                <thead>
+                    <tr class="border-b border-slate-100">
+                        <th class="pb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">Description</th>
+                        <th class="pb-3 px-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Qty</th>
+                        <th class="pb-3 px-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Price</th>
+                        <th class="pb-3 pl-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    <% invoice.lineItems.forEach(item => { %>
+                        <tr>
+                            <td class="py-4 font-medium text-slate-700 min-w-[200px]"><%= item.description %></td>
+                            <td class="py-4 px-4 text-right text-slate-500"><%= item.quantity %></td>
+                            <td class="py-4 px-4 text-right text-slate-500">$<%= item.price %></td>
+                            <td class="py-4 pl-4 text-right text-slate-900 font-bold">$<%= item.amount %></td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-8 pt-6 border-t border-slate-100">
+            <div class="w-full sm:w-1/2">
+                <% if(invoice.notes || invoice.terms) { %>
+                    <div class="bg-slate-50 rounded-xl p-4 text-xs text-slate-600">
+                        <% if(invoice.notes) { %>
+                            <div class="mb-3"><strong class="block text-[10px] uppercase tracking-widest text-slate-400 mb-1">Notes</strong><%= invoice.notes %></div>
+                        <% } %>
+                        <% if(invoice.terms) { %>
+                            <div><strong class="block text-[10px] uppercase tracking-widest text-slate-400 mb-1">Terms</strong><%= invoice.terms %></div>
+                        <% } %>
+                    </div>
+                <% } %>
+            </div>
+            
+            <div class="w-full sm:w-64 space-y-3 text-sm">
+                <div class="flex justify-between text-slate-500">
+                    <span>Subtotal</span>
+                    <span>$<%= invoice.subtotal %></span>
+                </div>
+                <div class="flex justify-between text-slate-500">
+                    <span>Tax (0%)</span>
+                    <span>$<%= invoice.tax %></span>
+                </div>
+                <div class="flex justify-between font-black text-xl text-slate-900 pt-3 border-t border-slate-100">
+                    <span>Total</span>
+                    <span>$<%= invoice.total %></span>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <!-- Actions Panel -->
+  <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6 flex flex-col sm:flex-row justify-end items-center gap-3">
+        <% if (invoice.status === 'Draft') { %>
+            <button onclick="alert('Invoice Sent!')" class="w-full sm:w-auto px-6 py-3 bg-slate-900 text-white rounded-xl text-sm font-bold shadow-md hover:bg-slate-800 transition-colors flex items-center justify-center gap-2">
+                <i data-lucide="send" class="w-4 h-4"></i> Send Invoice
+            </button>
+        <% } else if (invoice.status === 'Pending') { %>
+            <button onclick="alert('Invoice Resent!')" class="w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-md hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
+                <i data-lucide="send" class="w-4 h-4"></i> Resend Invoice
+            </button>
+        <% } else if (invoice.status === 'Overdue') { %>
+            <button onclick="alert('Reminder Sent!')" class="w-full sm:w-auto px-6 py-3 bg-rose-600 text-white rounded-xl text-sm font-bold shadow-md hover:bg-rose-700 transition-colors flex items-center justify-center gap-2">
+                <i data-lucide="bell" class="w-4 h-4"></i> Send Reminder
+            </button>
+        <% } %>
+        
+        <button onclick="window.open('/invoices/public/<%= invoice.id %>', '_blank')" class="w-full sm:w-auto px-6 py-3 bg-indigo-50 text-indigo-700 rounded-xl text-sm font-bold shadow-sm border border-indigo-100 hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2">
+            <i data-lucide="eye" class="w-4 h-4"></i> Preview
+        </button>
+        <button onclick="window.print()" class="w-full sm:w-auto px-6 py-3 bg-white text-slate-600 rounded-xl text-sm font-bold shadow-sm border border-slate-200 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+            <i data-lucide="printer" class="w-4 h-4"></i> Print / PDF
+        </button>
   </div>
 </div>
