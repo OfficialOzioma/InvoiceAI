@@ -14,8 +14,8 @@
       
       <!-- Create Button & View Toggles -->
       <div class="flex flex-col-reverse md:flex-row items-center gap-3 w-full md:w-auto">
-        <!-- View Toggle -->
-        <div class="flex bg-slate-100 p-1 rounded-xl w-full md:w-auto">
+        <!-- View Toggle (Hidden on Mobile/Tablet) -->
+        <div class="hidden lg:flex bg-slate-100 p-1 rounded-xl w-full md:w-auto">
             <button @click="view = 'table'" :class="view === 'table' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-900'" class="flex-1 px-4 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all flex justify-center items-center gap-1.5">
                 <i data-lucide="list" class="w-3.5 h-3.5"></i> Table
             </button>
@@ -61,7 +61,7 @@
     </div>
 
     <!-- TABLE VIEW -->
-    <div x-show="view === 'table'" class="block bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden min-h-[400px]">
+    <div x-show="view === 'table' || window.innerWidth < 1024" @resize.window="if(window.innerWidth < 1024) view = 'table'" class="block bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden min-h-[400px]">
       <div class="overflow-x-auto">
         <table class="w-full text-left">
           <thead>
@@ -107,6 +107,8 @@
                         </button>
                         <div x-show="menuOpen" class="absolute right-8 top-10 w-48 bg-white border border-slate-100 shadow-xl shadow-slate-200/50 rounded-xl z-50 overflow-hidden" style="display: none;">
                             <button @click.stop="openDetails(inv); menuOpen = false" class="w-full text-left px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors">View Details</button>
+                            <button @click.stop="window.location.href = '/invoices/edit/' + inv.id" class="w-full text-left px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors">Edit Invoice</button>
+                            <button @click.stop="window.open('/invoices/public/' + inv.id, '_blank')" class="w-full text-left px-4 py-2 text-xs font-bold text-indigo-600 hover:bg-indigo-50 transition-colors">Preview as Client</button>
                             <div class="border-t border-slate-100 my-1"></div>
                             <div class="px-4 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Change Status</div>
                             <template x-for="s in ['Draft', 'Pending', 'Paid', 'Overdue']">
@@ -124,7 +126,7 @@
     </div>
 
     <!-- KANBAN VIEW -->
-    <div x-show="view === 'kanban'" class="hidden" :class="{'hidden': view !== 'kanban', 'block': view === 'kanban'}">
+    <div x-show="view === 'kanban'" class="hidden lg:block" :class="{'hidden': view !== 'kanban', 'block': view === 'kanban'}">
       <div class="flex overflow-x-auto gap-4 md:gap-6 pb-6 snap-x min-h-[500px]">
           
           <template x-for="col in kanbanColumns" :key="col.name">
@@ -181,17 +183,17 @@
         <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" @click="modalOpen = false"></div>
         
         <!-- Modal Content -->
-        <div class="bg-white rounded-2xl w-full max-w-2xl z-10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="bg-white rounded-2xl w-full max-w-2xl z-10 shadow-2xl flex flex-col max-h-[90vh]">
             <template x-if="selectedInvoice">
-                <div>
-                   <div class="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
+                <div class="flex flex-col h-full overflow-hidden">
+                   <div class="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50 shrink-0">
                        <h2 class="text-xl font-black text-slate-900" x-text="selectedInvoice.clientName"></h2>
                        <button @click="modalOpen = false" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
                            <i data-lucide="x" class="w-4 h-4 text-slate-500"></i>
                        </button>
                    </div>
-                   <div class="p-8">
-                       <div class="flex justify-between items-start mb-8">
+                   <div class="p-8 overflow-y-auto flex-1">
+                       <div class="flex flex-col sm:flex-row justify-between items-start mb-8 gap-4">
                           <div>
                             <div class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-3" x-text="selectedInvoice.invoiceNumber"></div>
                             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest"
@@ -203,31 +205,129 @@
                                   }" x-text="selectedInvoice.status">
                             </span>
                           </div>
-                          <div class="text-right">
+                          <div class="text-left sm:text-right">
                             <div class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Total Due</div>
                             <div class="text-3xl font-black text-slate-900">$<span x-text="selectedInvoice.total"></span></div>
                           </div>
                       </div>
                       
-                      <div class="grid grid-cols-2 gap-8 border-t border-slate-100 pt-8">
-                         <div>
+                      <div class="grid grid-cols-2 md:grid-cols-4 gap-6 border-t border-slate-100 pt-6">
+                         <div class="col-span-2">
                             <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Billed To</div>
                             <div class="font-medium text-slate-900 text-sm" x-text="selectedInvoice.clientName"></div>
-                            <div class="text-xs text-slate-500 mt-1">123 Corporate Blvd.<br/>San Francisco, CA</div>
+                            <div class="text-xs text-slate-500 mt-0.5" x-text="selectedInvoice.email"></div>
                          </div>
                          <div>
                             <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Issue Date</div>
                             <div class="font-medium text-slate-900 text-sm" x-text="formatDate(selectedInvoice.createdAt)"></div>
                          </div>
+                         <div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Due Date</div>
+                            <div class="font-medium text-slate-900 text-sm" x-text="formatDate(selectedInvoice.dueDate)"></div>
+                         </div>
+                      </div>
+
+                      <div class="mt-8 border-t border-slate-100 pt-6 hidden sm:block">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="border-b border-slate-100">
+                                    <th class="pb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">Description</th>
+                                    <th class="pb-3 px-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Qty</th>
+                                    <th class="pb-3 px-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Price</th>
+                                    <th class="pb-3 pl-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-50">
+                                <template x-for="item in selectedInvoice.lineItems" :key="item.description">
+                                    <tr>
+                                        <td class="py-3 font-medium text-slate-700" x-text="item.description"></td>
+                                        <td class="py-3 px-2 text-right text-slate-500" x-text="item.quantity"></td>
+                                        <td class="py-3 px-2 text-right text-slate-500">$<span x-text="item.price"></span></td>
+                                        <td class="py-3 pl-2 text-right text-slate-900 font-bold">$<span x-text="item.amount"></span></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                        
+                        <div class="flex justify-end pt-4 border-t border-slate-100 mt-2">
+                           <div class="w-64 space-y-2 text-sm">
+                               <div class="flex justify-between text-slate-500">
+                                   <span>Subtotal</span>
+                                   <span>$<span x-text="selectedInvoice.subtotal"></span></span>
+                               </div>
+                               <div class="flex justify-between text-slate-500">
+                                   <span>Tax</span>
+                                   <span>$<span x-text="selectedInvoice.tax"></span></span>
+                               </div>
+                               <div class="flex justify-between font-black text-lg text-slate-900 pt-2 border-t border-slate-100">
+                                   <span>Total</span>
+                                   <span>$<span x-text="selectedInvoice.total"></span></span>
+                               </div>
+                           </div>
+                        </div>
                       </div>
 
                    </div>
-                   <div class="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-                       <button @click="modalOpen = false" class="px-5 py-2 text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">Close</button>
-                       <button @click="window.location.href = '/invoices/' + selectedInvoice.id" class="px-5 py-2 bg-slate-900 text-white rounded-lg text-sm font-bold shadow-md hover:bg-slate-800 transition-colors">Full Page View</button>
+                   <div class="p-6 bg-slate-50 border-t border-slate-100 flex flex-wrap justify-between items-center gap-3 shrink-0">
+                       <div class="flex items-center gap-3">
+                            <button @click="window.location.href = '/invoices/' + selectedInvoice.id" class="px-4 py-2 bg-white text-slate-600 rounded-lg text-sm font-bold shadow-sm border border-slate-200 hover:bg-slate-50 transition-colors">Expand</button>
+                            <button @click="window.open('/invoices/public/' + selectedInvoice.id, '_blank')" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-bold shadow-sm border border-indigo-100 hover:bg-indigo-100 transition-colors hidden sm:block">Preview</button>
+                            <button @click="window.location.href = '/invoices/edit/' + selectedInvoice.id" class="px-4 py-2 bg-white text-slate-600 rounded-lg text-sm font-bold shadow-sm border border-slate-200 hover:bg-slate-50 transition-colors">Edit</button>
+                       </div>
+                       
+                       <div class="flex items-center gap-3">
+                           <!-- Dynamic Notification Context Buttons -->
+                           <template x-if="selectedInvoice.status === 'Draft'">
+                               <button @click="alert('Invoice Sent!'); modalOpen = false" class="px-5 py-2 bg-slate-900 text-white rounded-lg text-sm font-bold shadow-md hover:bg-slate-800 transition-colors flex items-center gap-2">
+                                   <i data-lucide="send" class="w-4 h-4"></i> Send Invoice
+                               </button>
+                           </template>
+                           <template x-if="selectedInvoice.status === 'Pending'">
+                               <button @click="alert('Invoice Resent!'); modalOpen = false" class="px-5 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold shadow-md hover:bg-indigo-700 transition-colors flex items-center gap-2">
+                                   <i data-lucide="send" class="w-4 h-4"></i> Resend Invoice
+                               </button>
+                           </template>
+                           <template x-if="selectedInvoice.status === 'Overdue'">
+                               <button @click="alert('Reminder Sent!'); modalOpen = false" class="px-5 py-2 bg-rose-600 text-white rounded-lg text-sm font-bold shadow-md hover:bg-rose-700 transition-colors flex items-center gap-2">
+                                   <i data-lucide="bell" class="w-4 h-4"></i> Send Reminder
+                               </button>
+                           </template>
+                       </div>
                    </div>
                 </div>
             </template>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div x-show="deleteModalOpen" class="fixed inset-0 z-[60] flex items-center justify-center px-4" style="display: none;">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" @click="deleteModalOpen = false"></div>
+        <div class="bg-white rounded-2xl w-full max-w-sm z-10 shadow-2xl p-6 text-center transform transition-all">
+            <div class="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 mx-auto mb-4">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-black text-slate-900 mb-2">Delete Invoice?</h3>
+            <p class="text-sm text-slate-500 mb-6">This action cannot be undone. This invoice will be permanently removed.</p>
+            <div class="flex gap-3">
+                <button @click="deleteModalOpen = false" class="flex-1 px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl font-bold transition-colors">Cancel</button>
+                <button @click="confirmDelete()" class="flex-1 px-4 py-2 bg-rose-600 text-white hover:bg-rose-700 rounded-xl font-bold transition-colors shadow-lg shadow-rose-500/20">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Status Multi-Modal -->
+    <div x-show="statusModalOpen" class="fixed inset-0 z-[60] flex items-center justify-center px-4" style="display: none;">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" @click="statusModalOpen = false"></div>
+        <div class="bg-white rounded-2xl w-full max-w-sm z-10 shadow-2xl p-6 text-center transform transition-all">
+            <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mx-auto mb-4">
+                <i data-lucide="refresh-cw" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-black text-slate-900 mb-2">Change Status</h3>
+            <p class="text-sm text-slate-500 mb-6">Are you sure you want to change the status to <strong class="text-slate-900" x-text="pendingStatusChange?.status"></strong>?</p>
+            <div class="flex gap-3">
+                <button @click="statusModalOpen = false; pendingStatusChange = null;" class="flex-1 px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl font-bold transition-colors">Cancel</button>
+                <button @click="confirmStatusChange()" class="flex-1 px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl font-bold transition-colors shadow-lg shadow-indigo-500/20">Confirm</button>
+            </div>
         </div>
     </div>
 </div>
@@ -241,6 +341,10 @@
             searchQuery: '',
             modalOpen: false,
             selectedInvoice: null,
+            deleteModalOpen: false,
+            invoiceToDelete: null,
+            statusModalOpen: false,
+            pendingStatusChange: null,
             kanbanColumns: [
                 { name: 'Draft', color: 'bg-slate-100 text-slate-600' },
                 { name: 'Pending', color: 'bg-amber-100 text-amber-600' },
@@ -279,31 +383,56 @@
                 }
             },
 
-            async updateStatus(id, newStatus) {
+            updateStatus(id, newStatus) {
+                // Queue the change and open modal
+                this.pendingStatusChange = { id, status: newStatus };
+                this.statusModalOpen = true;
+                setTimeout(() => lucide.createIcons(), 10);
+            },
+
+            async confirmStatusChange() {
+                if(!this.pendingStatusChange) return;
+                const { id, status } = this.pendingStatusChange;
                 try {
                     const res = await fetch(`/invoices/${id}/status`, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ status: newStatus })
+                        body: JSON.stringify({ status })
                     });
                     if (res.ok) {
                         const idx = this.records.findIndex(i => i.id === id);
-                        if (idx > -1) this.records[idx].status = newStatus;
+                        if (idx > -1) this.records[idx].status = status;
+                        if(this.selectedInvoice && this.selectedInvoice.id === id) this.selectedInvoice.status = status;
                     }
                 } catch(e) {
                     console.error("Status update failed", e);
+                } finally {
+                    this.statusModalOpen = false;
+                    this.pendingStatusChange = null;
                 }
             },
 
-            async deleteInvoice(id) {
-                if(!confirm("Are you sure you want to delete this invoice?")) return;
+            deleteInvoice(id) {
+                this.invoiceToDelete = id;
+                this.deleteModalOpen = true;
+                setTimeout(() => lucide.createIcons(), 10);
+            },
+
+            async confirmDelete() {
+                if(!this.invoiceToDelete) return;
+                const id = this.invoiceToDelete;
                 try {
                     const res = await fetch(`/invoices/${id}`, { method: 'DELETE' });
                     if (res.ok) {
                         this.records = this.records.filter(i => i.id !== id);
                         if (this.selectedInvoice && this.selectedInvoice.id === id) this.modalOpen = false;
                     }
-                } catch(e) { console.error("Delete failed", e); }
+                } catch(e) { 
+                    console.error("Delete failed", e); 
+                } finally {
+                    this.deleteModalOpen = false;
+                    this.invoiceToDelete = null;
+                }
             },
 
             initSortable() {
