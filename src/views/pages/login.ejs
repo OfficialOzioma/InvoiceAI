@@ -1,0 +1,33 @@
+<%- include('../partials/nav') %>
+
+<main class="min-h-[calc(100vh-64px)] pt-24 pb-12 px-6 flex items-center justify-center">
+    <div class="bg-white border border-border rounded-[16px] p-10 max-w-md w-full shadow-xl shadow-slate-200/50">
+        <div class="text-center mb-10">
+            <div class="text-3xl font-extrabold tracking-tighter text-primary flex items-center justify-center gap-2 mb-2">
+                Invoice<span class="text-secondary">AI</span>
+            </div>
+            <p class="text-muted font-bold text-xs uppercase tracking-widest">Access your billing engine</p>
+        </div>
+
+        <form action="/auth/login" method="POST" class="space-y-6">
+            <div class="space-y-2">
+                <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Business Email</label>
+                <input type="email" name="email" required class="w-full bg-slate-50 border border-border rounded-lg px-4 py-3 text-sm outline-none focus:border-primary transition-all">
+            </div>
+            <div class="space-y-2">
+                <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Password</label>
+                <input type="password" name="password" required class="w-full bg-slate-50 border border-border rounded-lg px-4 py-3 text-sm outline-none focus:border-primary transition-all">
+            </div>
+
+            <button type="submit" class="w-full bg-primary text-white py-4 rounded-md font-bold text-sm hover:bg-secondary transition-all shadow-lg shadow-blue-100 mt-4">
+                Enter Workspace
+            </button>
+        </form>
+
+        <div class="mt-8 pt-8 border-t border-slate-50 text-center">
+            <p class="text-xs text-muted">Demo credentials: <span class="font-bold text-secondary">admin@invoiceai.com / password123</span></p>
+        </div>
+    </div>
+</main>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,118 @@
+<div class="space-y-8 pb-20">
+  <div class="flex items-center justify-between">
+    <a href="/invoices" class="flex items-center gap-2 text-muted hover:text-primary font-bold uppercase text-[10px] tracking-widest transition-colors text-decoration-none">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i> Back
+    </a>
+    <div class="flex gap-4">
+      <button 
+        id="saveInvoice"
+        class="bg-primary text-white px-8 py-3 rounded-md text-xs font-bold shadow-lg shadow-blue-100 hover:bg-secondary transition-all flex items-center gap-2"
+      >
+        <i data-lucide="save" class="w-4 h-4"></i> Issue Invoice
+      </button>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-10">
+    <div class="lg:col-span-2 space-y-8">
+      <!-- AI Prompter -->
+      <div class="bg-secondary rounded-[16px] p-8 text-white relative overflow-hidden group">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-3xl rounded-full"></div>
+        <div class="flex items-center gap-2 text-primary font-bold uppercase text-[10px] tracking-widest mb-4">
+          <i data-lucide="zap" class="w-3.5 h-3.5 fill-currentColor"></i> AI Acceleration Engine
+        </div>
+        <h3 class="text-xl font-bold mb-4">What are we billing for today?</h3>
+        <div class="flex gap-4">
+          <input 
+            id="aiPrompt"
+            placeholder="e.g. 5 hours of design work at $100/hr..."
+            class="flex-1 bg-white/10 border border-white/10 rounded-xl px-6 py-4 text-sm outline-none focus:bg-white/20 focus:border-primary transition-all placeholder:text-white/30"
+          />
+          <button 
+            id="generateAi"
+            class="bg-primary hover:bg-blue-500 px-6 rounded-xl flex items-center justify-center transition-all"
+          >
+            <i data-lucide="sparkles" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Builder Form -->
+      <div class="bg-white rounded-[16px] border border-border shadow-sm p-10 space-y-10">
+        <div class="grid md:grid-cols-2 gap-8">
+          <div class="space-y-4">
+            <div class="space-y-2">
+               <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Invoice Number</label>
+               <input 
+                id="invoiceNumber"
+                type="text" 
+                value="INV-1001"
+                class="w-full bg-slate-50 border border-border rounded-lg px-4 py-3 text-sm font-bold font-mono outline-none focus:bg-white focus:border-primary transition-all"
+               />
+            </div>
+            <div class="space-y-2">
+               <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Client</label>
+               <select id="clientId" class="w-full bg-slate-50 border border-border rounded-lg px-4 py-3 text-sm outline-none focus:bg-white focus:border-primary transition-all">
+                  <option value="">Select a Client</option>
+                  <!-- Clients would be populated here -->
+               </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+             <div class="space-y-2">
+               <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Issue Date</label>
+               <input type="date" class="w-full bg-slate-50 border border-border rounded-lg px-4 py-2 text-xs outline-none" />
+            </div>
+            <div class="space-y-2">
+               <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Due Date</label>
+               <input type="date" class="w-full bg-slate-50 border border-border rounded-lg px-4 py-2 text-xs outline-none" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Line Items -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Line Items</label>
+            <button id="addItem" class="text-[10px] font-bold uppercase tracking-widest text-primary hover:text-secondary transition-colors flex items-center gap-1">
+              <i data-lucide="plus" class="w-3 h-3"></i> Add Item
+            </button>
+          </div>
+          <div id="itemsContainer" class="space-y-3">
+            <!-- Dynamic items -->
+          </div>
+        </div>
+
+        <div class="pt-10 flex justify-end">
+          <div class="w-72 space-y-4">
+            <div class="flex justify-between text-sm text-muted">
+              <span>Subtotal</span>
+              <span id="subtotalDisplay" class="font-bold font-mono">$0.00</span>
+            </div>
+            <div class="flex justify-between text-sm text-muted">
+              <span>Estimated Tax (10%)</span>
+              <span id="taxDisplay" class="font-bold font-mono">$0.00</span>
+            </div>
+            <div class="pt-4 border-t-2 border-secondary flex justify-between items-center bg-blue-50 px-6 py-4 rounded-xl">
+              <span class="font-bold text-secondary">Total Due</span>
+              <span id="totalDisplay" class="text-2xl font-extrabold font-mono text-primary tracking-tighter">$0.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview / Context Sidebar -->
+    <div class="space-y-8">
+       <div class="bg-white rounded-[16px] border border-border shadow-sm p-8">
+        <h3 class="text-[10px] font-bold uppercase tracking-widest text-muted mb-6">Context & Notes</h3>
+        <textarea 
+          placeholder="Terms, instructions..."
+          class="w-full bg-slate-50 border border-border rounded-xl px-4 py-3 text-xs outline-none focus:bg-white focus:border-primary transition-all min-h-[150px]"
+        ></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/builder.js"></script>

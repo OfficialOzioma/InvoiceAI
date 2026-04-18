@@ -1,0 +1,104 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Information about a user account and their role.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "onboarded": { "type": "boolean" },
+        "activeWorkspace": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "createdAt"]
+    },
+    "Workspace": {
+      "title": "Business Workspace",
+      "description": "Multi-tenant business container.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "currency": { "type": "string" },
+        "address": { "type": "string" },
+        "contactEmail": { "type": "string" },
+        "taxId": { "type": "string" },
+        "paystackPublicKey": { "type": "string" },
+        "paystackSecretKey": { "type": "string" },
+        "plan": { "type": "string", "enum": ["free", "pro"] },
+        "aiCredits": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "ownerId", "plan", "createdAt"]
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "Structured invoice data.",
+      "type": "object",
+      "properties": {
+        "workspaceId": { "type": "string" },
+        "clientId": { "type": "string" },
+        "invoiceNumber": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "sent", "paid", "overdue"] },
+        "issueDate": { "type": "string", "format": "date" },
+        "dueDate": { "type": "string", "format": "date" },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": { "type": "string" },
+              "quantity": { "type": "number" },
+              "unitPrice": { "type": "number" },
+              "total": { "type": "number" }
+            }
+          }
+        },
+        "subtotal": { "type": "number" },
+        "tax": { "type": "number" },
+        "discount": { "type": "number" },
+        "total": { "type": "number" },
+        "currency": { "type": "string" },
+        "notes": { "type": "string" },
+        "templateId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["workspaceId", "clientId", "invoiceNumber", "status", "total", "createdAt"]
+    },
+    "Client": {
+      "title": "Client",
+      "description": "Business customer information.",
+      "type": "object",
+      "properties": {
+        "workspaceId": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "address": { "type": "string" },
+        "phone": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["workspaceId", "name", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Individual user accounts."
+    },
+    "/workspaces/{workspaceId}": {
+      "schema": "Workspace",
+      "description": "Business workspaces owned by users."
+    },
+    "/workspaces/{workspaceId}/invoices/{invoiceId}": {
+      "schema": "Invoice",
+      "description": "Invoices within a workspace."
+    },
+    "/workspaces/{workspaceId}/clients/{clientId}": {
+      "schema": "Client",
+      "description": "Clients within a workspace."
+    }
+  }
+}

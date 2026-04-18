@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #2563EB;
+  --color-secondary: #0F172A;
+  --color-muted: #64748B;
+  --color-surface: #FFFFFF;
+  --color-background: #F8FAFC;
+  --color-border: #E2E8F0;
+
+  --radius-bento: 16px;
+  --radius-button: 6px;
+
+  --font-sans: "Inter", "Helvetica Neue", Arial, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-slate-800 antialiased;
+  }
+}

@@ -1,0 +1,81 @@
+<div class="space-y-8">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-extrabold tracking-tight mb-2 text-secondary">Invoice Engine</h1>
+        <p class="text-muted text-sm">Managing <%= invoices.length %> active invoices across workspace.</p>
+      </div>
+      <div class="flex gap-3">
+        <a href="/invoices/new" class="bg-secondary text-white px-5 py-2.5 rounded-md text-xs font-bold flex items-center gap-2 hover:bg-primary transition-all italic">
+          <i data-lucide="zap" class="w-4 h-4 fill-white"></i> New AI Draft
+        </a>
+        <a href="/invoices/new" class="bg-primary text-white px-5 py-2.5 rounded-md text-xs font-bold flex items-center gap-2 hover:bg-secondary transition-all">
+          <i data-lucide="plus" class="w-4 h-4"></i> Manual
+        </a>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-[16px] border border-border shadow-sm overflow-hidden">
+      <!-- Filters -->
+      <div class="p-6 border-b border-border flex flex-wrap items-center justify-between gap-6">
+        <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-border">
+          <button class="px-4 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest bg-white text-primary shadow-sm">all</button>
+          <button class="px-4 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest text-muted hover:text-secondary">draft</button>
+          <button class="px-4 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest text-muted hover:text-secondary">paid</button>
+        </div>
+        
+        <div class="flex items-center gap-4">
+           <div class="relative">
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4"></i>
+            <input type="text" placeholder="Search invoices..." class="pl-9 pr-4 py-2.5 bg-slate-50 border border-border rounded-lg text-xs outline-none focus:bg-white focus:border-primary transition-all" />
+           </div>
+           <button class="p-2.5 bg-slate-50 border border-border rounded-lg text-slate-400 hover:text-primary transition-colors">
+             <i data-lucide="filter" class="w-4.5 h-4.5"></i>
+           </button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="bg-slate-50/50">
+              <th class="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted">Invoice</th>
+              <th class="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted">Issued</th>
+              <th class="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted">Status</th>
+              <th class="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted text-right">Amount</th>
+              <th class="px-8 py-4"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-50">
+            <% if (invoices.length === 0) { %>
+               <tr>
+                 <td colspan="5" class="px-8 py-20 text-center text-muted italic">No invoices found.</td>
+               </tr>
+            <% } else { %>
+              <% invoices.forEach(inv => { %>
+                <tr class="hover:bg-slate-50/50 transition-colors group">
+                    <td class="px-8 py-6">
+                        <div class="font-bold text-secondary"><%= inv.invoiceNumber %></div>
+                        <div class="text-[10px] text-muted font-mono">ID: <%= inv.id.slice(0,8) %></div>
+                    </td>
+                    <td class="px-8 py-6 text-sm text-muted">
+                        <%= new Date(inv.createdAt).toLocaleDateString() %>
+                    </td>
+                    <td class="px-8 py-6">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-600">
+                            <%= inv.status %>
+                        </span>
+                    </td>
+                    <td class="px-8 py-6 text-right font-bold font-mono text-primary">$<%= inv.total %></td>
+                    <td class="px-8 py-6 text-right">
+                        <a href="/invoices/edit/<%= inv.id %>" class="text-slate-300 hover:text-primary transition-colors">
+                            <i data-lucide="arrow-up-right" class="w-5 h-5"></i>
+                        </a>
+                    </td>
+                </tr>
+              <% }) %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+</div>

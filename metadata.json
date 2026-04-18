@@ -1,0 +1,6 @@
+{
+  "name": "InvoiceAI",
+  "description": "An AI-powered multi-tenant invoicing platform for modern business workspaces. Generate structured invoices instantly with AI, track payments, and manage clients with a clean, minimal interface.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
