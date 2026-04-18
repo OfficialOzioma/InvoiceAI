@@ -3,6 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import expressLayouts from "express-ejs-layouts";
 import cookieParser from "cookie-parser";
+import session from "express-session";
 import dotenv from "dotenv";
 import routes from "./src/routes/index.js";
 import { checkAuth } from "./src/middleware/auth.js";
@@ -25,6 +26,16 @@ app.set("layout", "layout");
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'invoice-ai-secret',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { 
+    secure: true, 
+    sameSite: 'none',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
 app.use(checkAuth);
 app.use(express.static(path.join(__dirname, "public")));
 

@@ -10,11 +10,15 @@ export const getOnboardingStep = (req: Request, res: Response) => {
     'Your First Invoice'
   ];
 
+  // Retrieve stored data from session
+  const onboardingData = (req.session as any).onboardingData || {};
+
   res.render('pages/onboarding', {
     title: `${titles[step - 1]} | Onboarding`,
     step: step,
     totalSteps: 5,
-    stepTitle: titles[step - 1]
+    stepTitle: titles[step - 1],
+    onboardingData: onboardingData
   });
 };
 
@@ -22,13 +26,18 @@ export const postOnboardingStep = async (req: Request, res: Response) => {
   const step = parseInt(req.params.step);
   const data = req.body;
   
-  console.log(`Onboarding Step ${step} Data:`, data);
+  // Persist current step data to session
+  if (!(req.session as any).onboardingData) {
+    (req.session as any).onboardingData = {};
+  }
+  
+  // Merge new data with existing session data
+  (req.session as any).onboardingData = {
+    ...(req.session as any).onboardingData,
+    ...data
+  };
 
-  // In a real app, you'd update Firestore:
-  // await updateDoc(doc(db, 'users', userId), { currentOnboardingStep: step + 1 });
-  // If step 1, create business doc.
-  // If step 2, update logo/colors.
-  // If step 5, finish and mark onboardingStatus = 'completed'.
+  console.log(`Onboarding Step ${step} Updated Data:`, (req.session as any).onboardingData);
 
   if (step < 5) {
     res.redirect(`/onboarding/step/${step + 1}`);
