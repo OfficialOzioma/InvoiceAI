@@ -1,0 +1,132 @@
+<div class="h-full flex flex-col space-y-4" x-data="templateEditor()">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-extrabold tracking-tight mb-1 text-secondary">
+                <span x-text="isEdit ? 'Edit Template' : 'Create Template'"></span>
+            </h1>
+            <p class="text-sm text-slate-500 font-medium">Design your invoice layout using HTML and variables.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="/templates" class="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 bg-slate-100 rounded-lg transition-colors">Cancel</a>
+            <button @click="saveTemplate()" class="bg-primary text-white hover:bg-secondary px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors shadow-lg shadow-blue-100">
+                <i data-lucide="save" class="w-4 h-4"></i> Save Template
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Editor Area -->
+    <div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[600px]">
+        <!-- Code Editor Section -->
+        <div class="bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden shadow-sm">
+            <div class="bg-slate-50 border-b border-slate-200 p-4 flex items-center justify-between">
+                <div>
+                     <input type="text" x-model="templateName" placeholder="Template Name (e.g. My Custom Layout)" class="bg-transparent border-0 font-bold text-secondary placeholder-slate-400 focus:ring-0 p-0 text-sm w-full outline-none">
+                </div>
+                <!-- Variables helper toggle -->
+                <button @click="showVars = !showVars" class="text-slate-400 hover:text-primary transition-colors" title="Show Variables">
+                     <i data-lucide="variable" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div x-show="showVars" x-transition class="bg-indigo-50 border-b border-indigo-100 p-4 text-xs text-indigo-800" style="display: none;">
+                <p class="font-bold mb-2">Available Variables (Click to copy):</p>
+                <div class="flex flex-wrap gap-2">
+                    <template x-for="v in variables" :key="v">
+                        <span @click="copyVar(v)" class="bg-indigo-100 hover:bg-primary hover:text-white cursor-pointer px-2 py-1 rounded font-mono transition-colors" x-text="'{{' + v + '}}'"></span>
+                    </template>
+                </div>
+            </div>
+
+            <!-- HTML Textarea -->
+            <textarea x-model="htmlContent" @input="updatePreview()" class="flex-1 w-full bg-slate-900 text-slate-300 font-mono text-sm p-6 focus:outline-none resize-none" spellcheck="false" placeholder="<div>{{business_name}} HTML...</div>"></textarea>
+        </div>
+
+        <!-- Live Preview Section -->
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl flex flex-col overflow-hidden shadow-inner relative">
+            <div class="bg-white border-b border-slate-200 p-4 flex items-center justify-between shadow-sm z-10 relative">
+                <h3 class="font-bold text-sm text-slate-600 flex items-center gap-2">
+                    <i data-lucide="eye" class="w-4 h-4"></i> Live Preview
+                </h3>
+            </div>
+            <div class="flex-1 p-6 relative overflow-auto bg-slate-100/50">
+                 <!-- Real iframe rendered by blob to isolate and safely render string html -->
+                 <iframe x-ref="previewFrame" class="w-full min-h-full bg-white shadow-xl shadow-slate-200/50 border border-slate-200 rounded-lg pointer-events-none" sandbox="allow-same-origin"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function templateEditor() {
+    return {
+        isEdit: <%= typeof template !== 'undefined' ? 'true' : 'false' %>,
+        templateName: '<%= typeof template !== 'undefined' ? template.name : "" %>',
+        htmlContent: `<%- typeof template !== 'undefined' ? template.content.replace(/`/g, '\\`') : '<div style="padding: 40px; font-family: sans-serif;">\\n  <h1 style="font-size: 24px;">{{business_name}}</h1>\\n  <p>To: {{client_name}}</p>\\n  <div style="margin-top: 20px; font-size: 12px;">\\n    {{items}}\\n  </div>\\n  <h2 style="text-align:right;">Total: {{total_amount}}</h2>\\n</div>' %>`,
+        showVars: false,
+        variables: ['business_name', 'client_name', 'invoice_number', 'date', 'items', 'items_table_rows', 'items_table_rows_compact', 'total_amount'],
+        sampleData: {
+            business_name: 'Acme Corporation',
+            client_name: 'John Doe LLC',
+            invoice_number: '10042',
+            date: new Date().toLocaleDateString(),
+            total_amount: '$1,500.00',
+            items: [
+                { description: 'Consulting Services', price: 1000, quantity: 1 },
+                { description: 'Server Hosting', price: 250, quantity: 2 }
+            ]
+        },
+        
+        init() {
+            setTimeout(() => this.updatePreview(), 100);
+        },
+
+        copyVar(v) {
+            navigator.clipboard.writeText('{{' + v + '}}');
+            // Optional: toast notification
+        },
+
+        updatePreview() {
+            // Render basic placeholders locally inside Alpine for the preview
+            let rendered = this.htmlContent;
+            
+            for (const [key, value] of Object.entries(this.sampleData)) {
+                if (key === 'items') {
+                     let itemsHtml = '';
+                     for (const item of value) {
+                         itemsHtml += \`<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0;"><div style="flex: 1;">\${item.description}</div><div style="width: 100px; text-align: right;">$\${Number(item.price * item.quantity).toFixed(2)}</div></div>\`;
+                     }
+                     rendered = rendered.replace(new RegExp('{{'+key+'}}', 'g'), itemsHtml);
+                } else if (key.startsWith('items_table_rows')) {
+                     let itemsHtml = '';
+                     for (const item of value) {
+                         itemsHtml += \`<tr><td style="padding: 8px;">\${item.description}</td><td style="padding: 8px; text-align: right;">$\${Number(item.price * item.quantity).toFixed(2)}</td></tr>\`;
+                     }
+                     rendered = rendered.replace(new RegExp('{{'+key+'}}', 'g'), itemsHtml);
+                } else {
+                     rendered = rendered.replace(new RegExp('{{'+key+'}}', 'g'), value);
+                }
+            }
+
+            const frame = this.$refs.previewFrame;
+            // Write safely via Blob URL to prevent weird script executions in main frame context
+            const blob = new Blob([rendered], {type: 'text/html;charset=utf-8'});
+            frame.src = URL.createObjectURL(blob);
+        },
+
+        async saveTemplate() {
+            if(!this.templateName.trim()) return alert("Template needs a name.");
+            
+            // Validate required placeholders
+            const missing = ['business_name', 'total_amount', 'items'].filter(v => !this.htmlContent.includes('{{'+v+'}}'));
+            if(missing.length > 0) {
+                 if(!confirm('Warning: Missing recommended variables - ' + missing.join(', ') + '. Continue?')) return;
+            }
+
+            // Real impl would POST to /templates/api
+            alert("Custom template system stored temporarily in session (mocked)");
+            window.location.href = "/templates";
+        }
+    }
+}
+</script>

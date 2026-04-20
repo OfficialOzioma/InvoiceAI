@@ -1,16 +1,58 @@
 <div class="space-y-6">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <h1 class="text-2xl font-extrabold tracking-tight mb-1 text-secondary">Templates & Branding</h1>
         <p class="text-sm text-slate-500 font-medium">Control the visual identity and layout of your invoices.</p>
       </div>
+      <div>
+        <a href="/templates/new" class="bg-primary text-white hover:bg-secondary px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg shadow-blue-100">
+            <i data-lucide="plus" class="w-4 h-4"></i> Custom Template
+        </a>
+      </div>
     </div>
     
-    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm shadow-slate-200/50 p-12 text-center">
-        <div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto text-slate-300 mb-4">
-            <i data-lucide="layout-template" class="w-8 h-8"></i>
+    <!-- Templates Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <% templates.forEach(template => { %>
+        <div class="bg-white rounded-[24px] border border-slate-200 overflow-hidden group hover:border-primary hover:shadow-xl transition-all flex flex-col">
+            <!-- Preview Area -->
+            <div class="aspect-[1/1.2] bg-slate-50 relative overflow-hidden flex-1 border-b border-slate-100 p-4">
+                <!-- Overlay to prevent interaction and add a subtle gradient -->
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-100/50 to-transparent z-10 pointer-events-none"></div>
+                <!-- Iframe wrapper for 0.5x scaling to fit a whole letter-sized document -->
+                <div class="relative w-full h-full overflow-hidden rounded-lg shadow-sm border border-slate-200/50 bg-white">
+                     <iframe src="/templates/preview/<%= template.id %>" class="absolute top-0 left-0 w-[200%] h-[200%] border-0 origin-top-left scale-50 pointer-events-none" sandbox="allow-same-origin"></iframe>
+                </div>
+            </div>
+            
+            <!-- Actions Area -->
+            <div class="p-6 flex flex-col justify-between bg-white relative z-20">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-sm text-secondary"><%= template.name %></h3>
+                    <% if (template.isDefault) { %>
+                        <span class="text-[9px] font-bold uppercase tracking-widest text-slate-400 bg-slate-100 px-2 py-1 rounded">System</span>
+                    <% } else { %>
+                        <span class="text-[9px] font-bold uppercase tracking-widest text-teal-600 bg-teal-50 px-2 py-1 rounded">Custom</span>
+                    <% } %>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button class="flex-1 py-2 bg-slate-50 text-slate-600 hover:text-primary hover:bg-blue-50 text-xs font-bold uppercase tracking-widest rounded-lg transition-colors text-center border border-slate-200">
+                        Default
+                    </button>
+                    <a href="/templates/preview/<%= template.id %>" target="_blank" class="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-secondary transition-colors" title="Full Preview">
+                        <i data-lucide="external-link" class="w-4 h-4"></i>
+                    </a>
+                    <% if (!template.isDefault) { %>
+                    <a href="/templates/edit/<%= template.id %>" class="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary transition-colors" title="Edit HTML">
+                        <i data-lucide="edit-2" class="w-4 h-4"></i>
+                    </a>
+                    <button class="w-10 h-10 rounded-lg bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-400 hover:text-rose-600 hover:bg-rose-100 transition-colors" title="Delete Template">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                    <% } %>
+                </div>
+            </div>
         </div>
-        <h3 class="font-bold text-sm text-secondary uppercase tracking-tight mb-2">Configure Your Theme</h3>
-        <p class="text-xs text-slate-500 max-w-sm mx-auto">Upload a new logo, update brand colors, or choose between our standard template layouts here.</p>
+        <% }) %>
     </div>
 </div>
