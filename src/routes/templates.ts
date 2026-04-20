@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { checkAuth } from '../middleware/auth.js';
 import { templateService } from '../services/templateService.js';
+import ejs from 'ejs';
 
 const router = Router();
 
@@ -18,7 +19,8 @@ router.get('/new', checkAuth, (req, res) => {
     res.render('pages/template-editor', {
         title: 'Create Template | InvoiceAI',
         layout: 'dashboard-layout',
-        user: (req as any).user
+        user: (req as any).user,
+        template: undefined
     });
 });
 
@@ -38,6 +40,38 @@ router.get('/edit/:id', checkAuth, async (req, res) => {
         user: (req as any).user,
         template
     });
+});
+
+router.post('/preview-raw', checkAuth, async (req, res) => {
+    const { code } = req.body;
+    if (!code) {
+        return res.send('');
+    }
+
+    const sampleData = {
+        business_name: 'Acme Corporation',
+        client_name: 'John Doe LLC',
+        invoice_number: '10042',
+        date: new Date().toLocaleDateString(),
+        total_amount: '$1,500.00',
+        items: [
+            { description: 'Consulting Services', price: 1000, quantity: 1, total: 1000 },
+            { description: 'Server Hosting', price: 250, quantity: 2, total: 500 }
+        ]
+    };
+
+    try {
+        const rendered = ejs.render(code, sampleData);
+        res.send(rendered);
+    } catch (e: any) {
+        // Send back a stylized error to display in the iframe preview securely
+        res.status(400).send(`
+            <div style="font-family: monospace; color: #ef4444; background: #fee2e2; padding: 20px; border-radius: 8px; border: 1px solid #fca5a5; margin: 20px;">
+                <h3 style="margin-top:0;">EJS Syntax Error</h3>
+                <p style="white-space: pre-wrap;">${e.message}</p>
+            </div>
+        `);
+    }
 });
 
 router.get('/preview/:id', checkAuth, async (req, res) => {
