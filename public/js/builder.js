@@ -118,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
             clientName: document.getElementById('clientId').options[document.getElementById('clientId').selectedIndex]?.text || 'Acme Corp',
             issueDate: document.querySelectorAll('input[type="date"]')[0].value,
             dueDate: document.querySelectorAll('input[type="date"]')[1].value,
+            templateId: document.getElementById('selectedTemplateId')?.value || 'minimal.html',
             items: items.map((_, i) => ({
                 description: document.querySelectorAll('.item-desc')[i].value,
                 quantity: parseFloat(document.querySelectorAll('.item-qty')[i].value) || 0,
