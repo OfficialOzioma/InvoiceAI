@@ -9,6 +9,7 @@ import paymentsRoutes from './payments.js';
 import templatesRoutes from './templates.js';
 import settingsRoutes from './settings.js';
 import profileRoutes from './profile.js';
+import subscriptionRoutes from './subscription.js';
 
 const router = Router();
 
@@ -22,5 +23,6 @@ router.use('/payments', paymentsRoutes);
 router.use('/templates', templatesRoutes);
 router.use('/settings', settingsRoutes);
 router.use('/profile', profileRoutes);
+router.use('/subscription', subscriptionRoutes);
 
 export default router;

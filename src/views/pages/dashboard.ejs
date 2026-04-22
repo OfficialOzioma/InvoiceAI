@@ -88,6 +88,8 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <!-- AI Insights Section -->
     <div x-data="{ 
         loading: false, 
@@ -108,6 +110,24 @@
             } finally {
                 this.loading = false;
             }
+        },
+        downloadReport() {
+            const element = document.getElementById('ai-report-template');
+            
+            const opt = {
+                margin: 10,
+                filename: 'invoice-ai-insights.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'vertical' }
+            };
+
+            // Temporarily show for capture
+            element.style.display = 'block';
+            
+            html2pdf().from(element).set(opt).save().finally(() => {
+                element.style.display = 'none';
+            });
         }
     }" class="bg-indigo-900 rounded-[32px] p-6 md:p-8 text-white relative overflow-hidden shadow-xl shadow-indigo-500/20">
         <div class="absolute -right-4 -top-4 w-64 h-64 bg-white opacity-[0.03] rounded-full blur-3xl pointer-events-none"></div>
@@ -122,28 +142,37 @@
                 <p class="text-xs text-indigo-200 font-medium max-w-md">Let our AI analyze your billing patterns and provide strategic recommendations.</p>
             </div>
             
-            <button @click="fetchInsights" 
-                    :disabled="loading"
-                    class="bg-white text-indigo-900 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50">
-                <template x-if="!loading">
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="zap" class="w-4 h-4 text-indigo-600"></i>
-                        Generate Insights
-                    </div>
-                </template>
-                <template x-if="loading">
-                    <div class="flex items-center gap-2">
-                        <svg class="animate-spin h-4 w-4 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Analyzing...
-                    </div>
-                </template>
-            </button>
+            <div class="flex items-center gap-3">
+                <button x-show="insights" 
+                        @click="downloadReport"
+                        class="bg-indigo-700 hover:bg-indigo-800 text-white p-3 rounded-2xl transition-all shadow-lg flex items-center gap-2 text-[10px] font-black uppercase tracking-widest border border-white/5">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    PDF Report
+                </button>
+                <button @click="fetchInsights" 
+                        :disabled="loading"
+                        class="bg-white text-indigo-900 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50">
+                    <template x-if="!loading">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="zap" class="w-4 h-4 text-indigo-600"></i>
+                            Generate Insights
+                        </div>
+                    </template>
+                    <template x-if="loading">
+                        <div class="flex items-center gap-2">
+                            <svg class="animate-spin h-4 w-4 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Analyzing...
+                        </div>
+                    </template>
+                </button>
+            </div>
         </div>
 
         <template x-if="insights">
+            <!-- Insights UI remains same -->
             <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-4 duration-500">
                 <div class="md:col-span-3 p-4 bg-white/5 border border-white/10 rounded-2xl">
                     <p class="text-sm font-bold italic text-indigo-100" x-text="'&quot;' + insights.summary + '&quot;'"></p>
@@ -186,6 +215,53 @@
                 <span x-text="error"></span>
             </div>
         </template>
+
+        <!-- Hidden PDF Template -->
+        <div id="ai-report-template" style="display: none; padding: 40px; background: white; color: #1e293b; font-family: 'Inter', sans-serif;">
+            <div style="display: flex; justify-between; items-center; border-bottom: 2px solid #f1f5f9; padding-bottom: 30px; margin-bottom: 40px;">
+                <div style="flex: 1;">
+                    <h1 style="font-size: 24px; font-weight: 900; color: #1e293b; margin: 0;">AI INSIGHTS REPORT</h1>
+                    <p style="font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 5px;">Financial Analysis & Recommendations</p>
+                </div>
+                <div style="text-align: right;">
+                    <div style="width: 40px; height: 40px; background: #3b82f6; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; color: white;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                    </div>
+                    <p style="font-size: 14px; font-weight: 800; color: #1e293b; margin: 5px 0 0 0;">Acme Corp</p>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 40px; background: #f8fafc; padding: 25px; border-radius: 16px; border: 1px solid #f1f5f9;">
+                <h2 style="font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; color: #64748b; margin-bottom: 15px;">Executive Summary</h2>
+                <p style="font-size: 14px; font-weight: 600; font-style: italic; color: #334155; line-height: 1.6;" x-text="insights ? insights.summary : ''"></p>
+            </div>
+
+            <div style="display: grid; grid-template-cols: 1fr; gap: 20px; margin-bottom: 40px;">
+                <template x-for="(insight, index) in (insights ? insights.insights : [])">
+                    <div style="background: white; border: 1px solid #f1f5f9; padding: 20px; border-radius: 12px;">
+                        <div style="display: flex; items-center; gap: 10px; margin-bottom: 12px;">
+                            <div style="padding: 4px 10px; background: #eff6ff; color: #3b82f6; font-size: 9px; font-weight: 900; border-radius: 4px; text-transform: uppercase;" x-text="insight.type"></div>
+                        </div>
+                        <p style="font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 15px;" x-text="insight.text"></p>
+                        <div style="background: #fafafa; padding: 12px; border-left: 3px solid #3b82f6; border-radius: 4px;">
+                            <span style="font-size: 9px; font-weight: 900; color: #94a3b8; text-transform: uppercase;">Recommended Action:</span>
+                            <p style="font-size: 11px; font-weight: 500; color: #475569; margin: 5px 0 0 0;" x-text="insight.action"></p>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <div style="border-top: 1px solid #f1f5f9; padding-top: 30px; display: flex; align-items: center; justify-between;">
+                <div>
+                  <h3 style="font-size: 11px; font-weight: 900; color: #64748b; text-transform: uppercase;">Financial Health Score</h3>
+                  <p style="font-size: 48px; font-weight: 900; color: #1e293b; margin: 0;" x-text="insights ? insights.healthScore : ''"></p>
+                </div>
+                <div style="text-align: right; color: #94a3b8; font-size: 10px; font-weight: 600;">
+                    Generated on June 22, 2026<br>
+                    by InvoiceAI Core
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Lower Section: Chart & Activity Grid -->
