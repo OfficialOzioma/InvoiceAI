@@ -1,10 +1,29 @@
 document.addEventListener('DOMContentLoaded', () => {
     const itemsContainer = document.getElementById('itemsContainer');
     const addItemBtn = document.getElementById('addItem');
-    const generateAiBtn = document.getElementById('generateAi');
-    const aiPromptInput = document.getElementById('aiPrompt');
 
     let items = [];
+
+    // Check for AI Draft in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const draftParam = urlParams.get('draft');
+    if (draftParam) {
+        try {
+            const decoded = decodeURIComponent(escape(atob(draftParam)));
+            const draft = JSON.parse(decoded);
+            if (draft) {
+                document.getElementById('invoiceNumber').value = draft.invoiceNumber || document.getElementById('invoiceNumber').value;
+                items = draft.items || [];
+                // Maybe pre-fill client if useful, but requires ID mapping usually
+                if (draft.notes) {
+                    const ta = document.querySelector('textarea');
+                    if(ta) ta.value = draft.notes;
+                }
+            }
+        } catch (e) {
+            console.error("Failed to parse draft", e);
+        }
+    }
 
     function renderItems() {
         itemsContainer.innerHTML = '';
@@ -68,29 +87,6 @@ document.addEventListener('DOMContentLoaded', () => {
             items.splice(index, 1);
             renderItems();
         }
-    });
-
-    generateAiBtn.addEventListener('click', async () => {
-        const prompt = aiPromptInput.value;
-        if (!prompt) return;
-
-        generateAiBtn.disabled = true;
-        try {
-            const res = await fetch('/invoices/ai-draft', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt })
-            });
-            const draft = await res.json();
-            if (draft) {
-                document.getElementById('invoiceNumber').value = draft.invoiceNumber;
-                items = draft.items;
-                renderItems();
-            }
-        } catch (error) {
-            console.error(error);
-        }
-        generateAiBtn.disabled = false;
     });
 
     const saveInvoiceBtn = document.getElementById('saveInvoice');
