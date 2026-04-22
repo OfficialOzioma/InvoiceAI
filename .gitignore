@@ -2,6 +2,7 @@ node_modules/
 build/
 dist/
 coverage/
+public/css/output.css
 .DS_Store
 *.log
 .env*
