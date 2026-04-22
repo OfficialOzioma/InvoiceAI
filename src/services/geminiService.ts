@@ -84,3 +84,58 @@ export const generateInvoiceDraft = async (prompt: string, businessContext: stri
     throw new Error(errorMsg);
   }
 };
+
+export const generateInsights = async (invoices: any[]) => {
+  if (!invoices || invoices.length === 0) {
+    return {
+      summary: "No invoice data available for analysis yet.",
+      insights: [
+        { type: "opportunity", text: "Create your first invoice to unlock AI-powered insights.", action: "Use the plus button above." }
+      ],
+      healthScore: 0
+    };
+  }
+  const model = process.env.AI_MODEL || "gemini-1.5-flash";
+  console.log(`[AI] Generating insights for ${invoices.length} invoices using ${model}`);
+
+  const prompt = `You are a financial analyst for a SaaS billing platform.
+  Analyze the following invoice data and provide 3-4 concise, high-impact insights.
+  Look for:
+  - Revenue trends (growth/decline)
+  - Outstanding payment risks
+  - Client concentration (if one client dominates)
+  - Suggested actions (e.g., "Follow up with Stark Industries on INV-2026-004")
+  
+  INVOICE DATA:
+  ${JSON.stringify(invoices, null, 2)}
+  
+  Format the response as a JSON object with this shape:
+  {
+    "summary": "Short overall summary sentence",
+    "insights": [
+       { "type": "trend|risk|opportunity", "text": "The insight sentence", "action": "Suggested next step" }
+    ],
+    "healthScore": 0-100
+  }
+  
+  IMPORTANT: Respond ONLY with valid JSON. Do not use markdown blocks, just return raw JSON text.`;
+
+  try {
+    const openai = getOpenAI();
+    const chatCompletion = await openai.chat.completions.create({
+      messages: [
+        { role: "system", content: "You are a professional financial analyst." },
+        { role: "user", content: prompt }
+      ],
+      model: model,
+      temperature: 0.7,
+    });
+
+    let responseText = chatCompletion.choices[0].message.content || "{}";
+    responseText = responseText.replace(/```json|```/g, "").trim();
+    return JSON.parse(responseText);
+  } catch (e: any) {
+    console.error("[AI] Analysis Error:", e);
+    throw e;
+  }
+};

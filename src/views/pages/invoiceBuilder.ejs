@@ -20,11 +20,44 @@
     <!-- Builder Form -->
       <div class="bg-white rounded-[16px] border border-border shadow-sm p-10 space-y-10 relative">
         <!-- Template Badge -->
-        <div class="absolute top-6 right-10">
-          <span class="text-[9px] font-black uppercase tracking-widest px-3 py-1 bg-slate-100 text-slate-500 rounded-full border border-slate-200">
-            Style: <%= templateId %>
-          </span>
-          <input type="hidden" id="selectedTemplateId" value="<%= templateId %>">
+        <div class="absolute top-6 right-10" x-data="{ 
+            open: false,
+            templateId: '<%= templateId %>',
+            templates: [
+                { id: 'minimal.html', name: 'Minimal' },
+                { id: 'corporate.html', name: 'Corporate' },
+                { id: 'modern.html', name: 'Modern' },
+                { id: 'bold.html', name: 'Bold' },
+                { id: 'standard-plus.html', name: 'Standard Plus' },
+                { id: 'timesheet.html', name: 'Timesheet' },
+                { id: 'commercial.html', name: 'Commercial' },
+                { id: 'milestone.html', name: 'Milestone' },
+                { id: 'recurring.html', name: 'Recurring' }
+            ],
+            changeTemplate(id) {
+                this.templateId = id;
+            }
+        }">
+          <button @click="open = !open" 
+                  class="text-[9px] font-black uppercase tracking-widest px-3 py-1 bg-slate-100 text-slate-500 rounded-full border border-slate-200 flex items-center gap-1.5 hover:bg-slate-200 transition-all">
+            <span x-text="'Style: ' + templateId"></span>
+            <i data-lucide="chevron-down" class="w-3 h-3"></i>
+          </button>
+          <div x-show="open" 
+               @click.away="open = false"
+               x-transition:enter="transition ease-out duration-100"
+               x-transition:enter-start="opacity-0 scale-95"
+               x-transition:enter-end="opacity-100 scale-100"
+               class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50">
+              <template x-for="tpl in templates" :key="tpl.id">
+                  <button @click="changeTemplate(tpl.id); open = false" 
+                          class="w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 transition-colors"
+                          :class="templateId === tpl.id ? 'text-primary' : 'text-slate-600'"
+                          x-text="tpl.name">
+                  </button>
+              </template>
+          </div>
+          <input type="hidden" id="selectedTemplateId" :value="templateId">
         </div>
 
         <div class="grid md:grid-cols-2 gap-8">

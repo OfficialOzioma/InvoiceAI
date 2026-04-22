@@ -22,18 +22,36 @@ class TemplateService {
             });
         }
         
+        // Mock custom template
+        templates.push({
+            id: 'custom-pro',
+            name: 'Professional Custom',
+            content: defaultTemplates['minimal.html'] || '',
+            isDefault: false
+        });
+        
         // TODO: In a real environment, fetch custom templates from Firebase where owner = businessId
         return templates;
     }
 
     async getTemplate(id: string): Promise<Template | null> {
         // Check defaults first
-        if (defaultTemplates[id + '.html']) {
+        const filename = id + '.html';
+        if (defaultTemplates[filename]) {
             return {
                 id,
                 name: id.charAt(0).toUpperCase() + id.slice(1),
-                content: defaultTemplates[id + '.html'],
+                content: defaultTemplates[filename],
                 isDefault: true
+            };
+        }
+
+        if (id === 'custom-pro') {
+            return {
+                id: 'custom-pro',
+                name: 'Professional Custom',
+                content: defaultTemplates['minimal.html'] || '',
+                isDefault: false
             };
         }
         return null;

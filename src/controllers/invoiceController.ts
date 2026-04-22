@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { generateInvoiceDraft } from '../services/geminiService.js';
+import { generateInvoiceDraft, generateInsights } from '../services/geminiService.js';
 
 export let INVOICES_DB = [
   { 
@@ -142,6 +142,16 @@ export const createAiDraft = async (req: Request, res: Response) => {
             error: error.message || "AI processing failed",
             details: error.error || null
         });
+    }
+};
+
+export const getAiInsights = async (req: Request, res: Response) => {
+    try {
+        const insights = await generateInsights(INVOICES_DB);
+        res.json(insights);
+    } catch (error: any) {
+        console.error("Controller Insights Error:", error);
+        res.status(500).json({ error: error.message || "Insights generation failed" });
     }
 };
 
