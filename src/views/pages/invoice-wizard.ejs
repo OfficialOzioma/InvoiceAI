@@ -1,0 +1,162 @@
+<div x-data="{ 
+    step: 1, 
+    method: new URLSearchParams(window.location.search).get('method') || null, 
+    selectedTemplate: 'minimal.html',
+    templates: [
+        { id: 'minimal.html', name: 'Minimal', description: 'Clean and simple for any business.' },
+        { id: 'corporate.html', name: 'Corporate', description: 'Professional and structured.' },
+        { id: 'modern.html', name: 'Modern', description: 'Contemporary with soft shadows.' },
+        { id: 'bold.html', name: 'Bold', description: 'High contrast for a strong impression.' },
+        { id: 'standard-plus.html', name: 'Standard Plus', description: 'Detailed and polished.' },
+        { id: 'timesheet.html', name: 'Timesheet', description: 'Perfect for hourly billing.' },
+        { id: 'commercial.html', name: 'Commercial', description: 'For international shipping.' },
+        { id: 'milestone.html', name: 'Milestone', description: 'Track progress billing.' },
+        { id: 'recurring.html', name: 'Recurring', description: 'Subscription based layouts.' }
+    ],
+    init() {
+        if (this.method) {
+            this.step = 2;
+        }
+        this.$watch('step', () => {
+            this.$nextTick(() => lucide.createIcons());
+        });
+    },
+    nextStep() {
+        if (this.step === 1 && this.method) {
+            this.step = 2;
+        } else if (this.step === 2 && this.selectedTemplate) {
+            // Redirect based on method
+            if (this.method === 'manual') {
+                window.location.href = `/invoices/new?template=${this.selectedTemplate}`;
+            } else {
+                window.location.href = `/invoices/ai?template=${this.selectedTemplate}`;
+            }
+        }
+    }
+}" class="max-w-4xl mx-auto py-8 px-4 sm:px-0">
+    
+    <!-- Progress Stepper -->
+    <div class="mb-12">
+        <div class="flex items-center justify-between relative">
+            <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-0.5 bg-slate-100 -z-10"></div>
+            
+            <!-- Step 1 Indicator -->
+            <div class="flex flex-col items-center gap-2">
+                <div :class="step >= 1 ? 'bg-primary text-white ring-4 ring-blue-50' : 'bg-slate-100 text-slate-400'" 
+                     class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300">
+                    1
+                </div>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Method</span>
+            </div>
+
+            <!-- Step 2 Indicator -->
+            <div class="flex flex-col items-center gap-2">
+                <div :class="step >= 2 ? 'bg-primary text-white ring-4 ring-blue-50' : 'bg-slate-100 text-slate-400'" 
+                     class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300">
+                    2
+                </div>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Template</span>
+            </div>
+
+            <!-- Step 3 Indicator -->
+            <div class="flex flex-col items-center gap-2">
+                <div :class="step >= 3 ? 'bg-primary text-white ring-4 ring-blue-50' : 'bg-slate-100 text-slate-400'" 
+                     class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300">
+                    3
+                </div>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Draft</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 1: Method Selection -->
+    <div x-show="step === 1" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" class="space-y-8">
+        <div class="text-center">
+            <h1 class="text-2xl font-black tracking-tight text-slate-900 mb-2">How would you like to create?</h1>
+            <p class="text-slate-500 font-medium">Choose between a smart AI assistant or manual builder.</p>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-6">
+            <!-- AI Mode -->
+            <button @click="method = 'ai'; nextStep()" 
+                    class="group relative bg-white border-2 border-slate-100 p-8 rounded-3xl text-left transition-all hover:border-primary hover:shadow-xl hover:shadow-blue-500/10"
+                    :class="method === 'ai' ? 'border-primary ring-2 ring-primary/10' : ''">
+                <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <i data-lucide="sparkles" class="w-7 h-7"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 mb-2">AI Assistant</h3>
+                <p class="text-sm text-slate-500 leading-relaxed">Describe your invoice in plain English. AI handles the items, taxes, and math.</p>
+                <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div class="bg-indigo-600 text-white text-[10px] px-2 py-1 rounded-full font-bold uppercase">Smart</div>
+                </div>
+            </button>
+
+            <!-- Manual Mode -->
+            <button @click="method = 'manual'; nextStep()" 
+                    class="group relative bg-white border-2 border-slate-100 p-8 rounded-3xl text-left transition-all hover:border-primary hover:shadow-xl hover:shadow-blue-500/10"
+                    :class="method === 'manual' ? 'border-primary ring-2 ring-primary/10' : ''">
+                <div class="w-14 h-14 bg-slate-50 text-slate-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <i data-lucide="keyboard" class="w-7 h-7"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 mb-2">Manual Builder</h3>
+                <p class="text-sm text-slate-500 leading-relaxed">Full control over every field. Enter line items and client details yourself.</p>
+            </button>
+        </div>
+    </div>
+
+    <!-- Step 2: Template Selection -->
+    <div x-show="step === 2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" class="space-y-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-black tracking-tight text-slate-900 mb-1">Pick a Style</h1>
+                <p class="text-sm text-slate-500 font-medium">Choose a template for your <span x-text="method" class="uppercase font-bold text-primary"></span> invoice.</p>
+            </div>
+            <button @click="step = 1" class="text-xs font-bold text-slate-400 hover:text-slate-900 flex items-center gap-1 transition-colors">
+                <i data-lucide="arrow-left" class="w-3 h-3"></i> Back
+            </button>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+            <template x-for="tpl in templates" :key="tpl.id">
+                <button @click="selectedTemplate = tpl.id" 
+                        class="group relative flex flex-col items-center bg-white border border-slate-100 rounded-2xl p-4 transition-all hover:shadow-lg"
+                        :class="selectedTemplate === tpl.id ? 'ring-2 ring-primary border-transparent shadow-md' : 'hover:border-slate-300'">
+                    
+                    <!-- Simulating a preview thumbnail with icons/colors -->
+                    <div class="w-full aspect-[3/4] bg-slate-50 rounded-lg mb-4 flex flex-col p-3 overflow-hidden relative border border-slate-100">
+                        <div class="h-2 w-1/2 bg-slate-200 rounded mb-2"></div>
+                        <div class="h-2 w-1/4 bg-slate-100 rounded mb-4"></div>
+                        <div class="space-y-1">
+                            <div class="h-1.5 w-full bg-slate-100 rounded"></div>
+                            <div class="h-1.5 w-full bg-slate-100 rounded"></div>
+                            <div class="h-1.5 w-2/3 bg-slate-100 rounded"></div>
+                        </div>
+                        
+                        <!-- Template Type Badge -->
+                        <div x-show="tpl.id.includes('timesheet')" class="absolute top-2 right-2 flex gap-1">
+                            <div class="w-2 h-2 rounded-full bg-blue-400"></div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <div class="text-xs font-bold text-slate-900" x-text="tpl.name"></div>
+                        <div class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1" x-text="tpl.id.split('.')[0]"></div>
+                    </div>
+
+                    <!-- Selected Indicator -->
+                    <div x-show="selectedTemplate === tpl.id" class="absolute -top-2 -right-2 bg-primary text-white w-6 h-6 rounded-full flex items-center justify-center shadow-lg">
+                        <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                    </div>
+                </button>
+            </template>
+        </div>
+
+        <div class="flex justify-center pt-8">
+            <button @click="nextStep()" 
+                    class="bg-slate-900 text-white px-10 py-3 rounded-2xl font-bold text-sm tracking-tight hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/20 flex items-center gap-2">
+                Continue to <span x-text="method === 'ai' ? 'Assistant' : 'Editor'"></span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </div>
+</div>

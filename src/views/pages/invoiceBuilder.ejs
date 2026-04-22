@@ -15,30 +15,18 @@
 
   <div class="grid lg:grid-cols-3 gap-10">
     <div class="lg:col-span-2 space-y-8">
-      <!-- AI Prompter -->
-      <div class="bg-secondary rounded-[16px] p-8 text-white relative overflow-hidden group">
-        <div class="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-3xl rounded-full"></div>
-        <div class="flex items-center gap-2 text-primary font-bold uppercase text-[10px] tracking-widest mb-4">
-          <i data-lucide="zap" class="w-3.5 h-3.5 fill-currentColor"></i> AI Acceleration Engine
-        </div>
-        <h3 class="text-xl font-bold mb-4">What are we billing for today?</h3>
-        <div class="flex gap-4">
-          <input 
-            id="aiPrompt"
-            placeholder="e.g. 5 hours of design work at $100/hr..."
-            class="flex-1 bg-white/10 border border-white/10 rounded-xl px-6 py-4 text-sm outline-none focus:bg-white/20 focus:border-primary transition-all placeholder:text-white/30"
-          />
-          <button 
-            id="generateAi"
-            class="bg-primary hover:bg-blue-500 px-6 rounded-xl flex items-center justify-center transition-all"
-          >
-            <i data-lucide="sparkles" class="w-5 h-5"></i>
-          </button>
-        </div>
-      </div>
+      <!-- Removed embedded AI block as it's now handled by the separate AI Assistant step -->
 
     <!-- Builder Form -->
-      <div class="bg-white rounded-[16px] border border-border shadow-sm p-10 space-y-10">
+      <div class="bg-white rounded-[16px] border border-border shadow-sm p-10 space-y-10 relative">
+        <!-- Template Badge -->
+        <div class="absolute top-6 right-10">
+          <span class="text-[9px] font-black uppercase tracking-widest px-3 py-1 bg-slate-100 text-slate-500 rounded-full border border-slate-200">
+            Style: <%= templateId %>
+          </span>
+          <input type="hidden" id="selectedTemplateId" value="<%= templateId %>">
+        </div>
+
         <div class="grid md:grid-cols-2 gap-8">
           <div class="space-y-4">
             <div class="space-y-2">
