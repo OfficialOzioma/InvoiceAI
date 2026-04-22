@@ -9,7 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const draftParam = urlParams.get('draft');
     if (draftParam) {
         try {
-            const draft = JSON.parse(atob(draftParam));
+            const decoded = decodeURIComponent(escape(atob(draftParam)));
+            const draft = JSON.parse(decoded);
             if (draft) {
                 document.getElementById('invoiceNumber').value = draft.invoiceNumber || document.getElementById('invoiceNumber').value;
                 items = draft.items || [];

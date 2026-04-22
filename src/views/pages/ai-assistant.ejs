@@ -1,4 +1,4 @@
-<div x-data="aiAssistant()" class="max-w-4xl mx-auto h-[calc(100vh-12rem)] flex flex-col bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+<div x-data="aiAssistantData()" class="max-w-4xl mx-auto h-[calc(100vh-12rem)] flex flex-col bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
     <!-- Header -->
     <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -45,9 +45,18 @@
         </template>
 
         <!-- Loading State -->
-        <div x-show="loading" class="flex gap-4 animate-pulse">
-            <div class="w-8 h-8 rounded-full bg-slate-100 shrink-0"></div>
-            <div class="bg-slate-50 h-12 w-32 rounded-2xl rounded-tl-none border border-slate-100"></div>
+        <div x-show="loading" class="flex gap-4">
+            <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                <i data-lucide="bot" class="w-4 h-4 text-slate-600 animate-bounce"></i>
+            </div>
+            <div class="bg-slate-50 p-4 rounded-2xl rounded-tl-none border border-slate-100 flex items-center gap-2">
+                <div class="flex gap-1">
+                    <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                    <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                    <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
+                </div>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Assistant is thinking...</span>
+            </div>
         </div>
     </div>
 
@@ -137,19 +146,10 @@
     </div>
 </div>
 
-<!-- Load Gemini from ESM -->
-<script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://esm.run/@google/genai"
-  }
-}
-</script>
+<script>
+console.log("AI Assistant Script Loaded (Standard Tag)");
 
-<script type="module">
-import { GoogleGenAI } from "@google/genai";
-
-window.aiAssistant = function() {
+window.aiAssistantData = function() {
     return {
         messages: [],
         userInput: '',
@@ -158,11 +158,14 @@ window.aiAssistant = function() {
         templateId: '<%= templateId %>',
 
         init() {
-            this.$nextTick(() => lucide.createIcons());
+            console.log("AI Assistant Alpine Component Initialized");
+            this.$nextTick(() => {
+                if (window.lucide) lucide.createIcons();
+            });
         },
         
         async sendMessage() {
-            if (!this.userInput.trim() || this.loading) return;
+            if (!this.userInput || !this.userInput.trim() || this.loading) return;
             
             const userText = this.userInput.trim();
             this.messages.push({ id: Date.now(), role: 'user', content: userText });
@@ -171,70 +174,67 @@ window.aiAssistant = function() {
             
             this.$nextTick(() => {
                 const container = document.getElementById('chatContainer');
-                container.scrollTop = container.scrollHeight;
+                if (container) container.scrollTop = container.scrollHeight;
+                if (window.lucide) lucide.createIcons();
             });
 
             try {
-                // Initialize AI from Frontend
-                // We assume the API key is injected into a global variable or metadata
-                const ai = new GoogleGenAI({ apiKey: "<%= process.env.GEMINI_API_KEY %>" });
-                
-                const response = await ai.models.generateContent({
-                    model: "gemini-3-flash-preview",
-                    contents: [
-                        { role: 'user', parts: [{ text: userText }] }
-                    ],
-                    config: {
-                        systemInstruction: `You are an expert billing assistant for InvoiceAI. 
-                        Transform the user's rough notes into a structured JSON invoice.
-                        
-                        Business Context: Modern SaaS / Freelance
-                        
-                        Output JSON format ONLY (no markdown):
-                        {
-                          "invoiceNumber": "INV-2026-005",
-                          "clientName": string,
-                          "items": [{ "description": string, "quantity": number, "unitPrice": number, "total": number }],
-                          "subtotal": number,
-                          "tax": number,
-                          "total": number,
-                          "notes": string
-                        }`,
-                        responseMimeType: "application/json"
-                    }
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 35000);
+
+                const response = await fetch('/invoices/ai-draft', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: userText }),
+                    signal: controller.signal
                 });
 
-                const result = JSON.parse(response.text);
+                const result = await response.json();
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error(result.error || result.details || 'Server error');
+                }
+
                 this.draft = result;
                 
                 this.messages.push({ 
                     id: Date.now() + 1, 
                     role: 'assistant', 
-                    content: "Great! I've extracted the details. Here's a draft based on what you said. Does it look correct?" 
+                    content: "Great! I've extracted the details and opened the preview overlay. Check it out!" 
                 });
 
             } catch (error) {
                 console.error("AI Error:", error);
+                let msg = "I hit a snag: " + (error.message || "Unknown error");
+                if (error.name === 'AbortError') msg = "Request timed out. Please try a simpler request.";
+                
                 this.messages.push({ 
                     id: Date.now() + 1, 
                     role: 'assistant', 
-                    content: "I'm sorry, I had trouble processing that. Can you try phrasing it differently?" 
-                });
-            } finally {
-                this.loading = false;
-                this.$nextTick(() => {
-                    const container = document.getElementById('chatContainer');
-                    container.scrollTop = container.scrollHeight;
-                    lucide.createIcons();
+                    content: msg 
                 });
             }
+            
+            // Set loading to false BEFORE nextTick to ensure Alpine applies it
+            this.loading = false;
+            
+            this.$nextTick(() => {
+                try {
+                    const container = document.getElementById('chatContainer');
+                    if (container) container.scrollTop = container.scrollHeight;
+                    if (window.lucide) lucide.createIcons();
+                } catch (e) {
+                    console.error("Layout error:", e);
+                }
+            });
         },
 
         confirmDraft() {
-            // Encode draft to URL or session and redirect to builder
-            const serialized = btoa(JSON.stringify(this.draft));
+            const jsonString = JSON.stringify(this.draft);
+            const serialized = btoa(unescape(encodeURIComponent(jsonString)));
             window.location.href = `/invoices/new?template=${this.templateId}&draft=${serialized}`;
         }
     };
-}
+};
 </script>

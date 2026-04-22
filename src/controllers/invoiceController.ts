@@ -105,7 +105,18 @@ export const getBuilder = (req: Request, res: Response) => {
 
 export const getAiAssistant = (req: Request, res: Response) => {
   const templateId = req.query.template as string || 'minimal.html';
-  res.render('pages/ai-assistant', { title: 'AI Assistant | InvoiceAI', layout: 'dashboard-layout', templateId });
+  const geminiApiKey = process.env.GEMINI_API_KEY || '';
+  
+  if (!geminiApiKey) {
+    console.warn("WARNING: GEMINI_API_KEY is not set in environment variables.");
+  }
+
+  res.render('pages/ai-assistant', { 
+    title: 'AI Assistant | InvoiceAI', 
+    layout: 'dashboard-layout', 
+    templateId,
+    geminiApiKey
+  });
 };
 
 export const getEditBuilder = (req: Request, res: Response) => {
@@ -125,8 +136,12 @@ export const createAiDraft = async (req: Request, res: Response) => {
     try {
         const draft = await generateInvoiceDraft(prompt, "Workspace User");
         res.json(draft);
-    } catch (error) {
-        res.status(500).json({ error: "AI failed" });
+    } catch (error: any) {
+        console.error("Controller AI Error:", error);
+        res.status(error.status || 500).json({ 
+            error: error.message || "AI processing failed",
+            details: error.error || null
+        });
     }
 };
 
