@@ -61,6 +61,10 @@ export class AuthService {
     return data;
   }
 
+  static async exchangeCodeForSession(code: string) {
+    return await supabase.auth.exchangeCodeForSession(code);
+  }
+
   static getGoogleOAuthUrl() {
     const { data } = supabase.auth.signInWithOAuth({
       provider: 'google',
