@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { InvoiceModel } from '../models/Invoice.js';
-import { BusinessSettingsModel } from '../models/BusinessSettings.js';
+import { OrganizationModel } from '../models/Organization.js';
 
 const MOCK_INVOICES = [
   { id: 'INV-001', invoiceNumber: 'INV-2026-001', clientName: 'Globex Corp', total: '1,450.00', status: 'Paid', createdAt: new Date() },
@@ -38,33 +38,37 @@ export const getDashboard = async (req: Request, res: Response) => {
 
     const isDatabaseReady = !!process.env.DATABASE_URL;
     if (isDatabaseReady) {
-      const liveInvoices = await InvoiceModel.getAllByUserId(user.id || 'mock-id');
-      if (liveInvoices.length > 0) {
-        invoices = liveInvoices.slice(0, 5).map((inv: any) => ({
-          id: inv.id,
-          invoiceNumber: inv.invoiceNumber,
-          clientName: inv.client?.name || 'Unknown Client',
-          total: inv.total.toString(),
-          status: inv.status,
-          createdAt: inv.createdAt
-        })) as any;
-        
-        // Calculate basic stats from live data
-        const totalRev = liveInvoices
-            .filter((i: any) => i.status === 'Paid')
-            .reduce((sum: number, i: any) => sum + parseFloat(i.total || 0), 0);
-        
-        const outstanding = liveInvoices
-            .filter((i: any) => i.status === 'Pending')
-            .reduce((sum: number, i: any) => sum + parseFloat(i.total || 0), 0);
-
-        stats = {
-            ...MOCK_STATS,
-            totalRevenue: totalRev.toLocaleString('en-US', { minimumFractionDigits: 2 }),
-            outstanding: outstanding.toLocaleString('en-US', { minimumFractionDigits: 2 }),
-            paidInvoices: liveInvoices.filter((i: any) => i.status === 'Paid').length,
-            overdueInvoices: liveInvoices.filter((i: any) => i.status === 'Overdue').length,
-        };
+      const organization = await OrganizationModel.getPrimaryForUser(user.id || 'mock-id');
+      
+      if (organization) {
+        const liveInvoices = await InvoiceModel.getAllByOrganizationId(organization.id);
+        if (liveInvoices.length > 0) {
+          invoices = liveInvoices.slice(0, 5).map((inv: any) => ({
+            id: inv.id,
+            invoiceNumber: inv.invoiceNumber,
+            clientName: inv.client?.name || 'Unknown Client',
+            total: inv.total.toString(),
+            status: inv.status,
+            createdAt: inv.createdAt
+          })) as any;
+          
+          // Calculate basic stats from live data
+          const totalRev = liveInvoices
+              .filter((i: any) => i.status === 'Paid')
+              .reduce((sum: number, i: any) => sum + parseFloat(i.total || 0), 0);
+          
+          const outstanding = liveInvoices
+              .filter((i: any) => i.status === 'Pending')
+              .reduce((sum: number, i: any) => sum + parseFloat(i.total || 0), 0);
+  
+          stats = {
+              ...MOCK_STATS,
+              totalRevenue: totalRev.toLocaleString('en-US', { minimumFractionDigits: 2 }),
+              outstanding: outstanding.toLocaleString('en-US', { minimumFractionDigits: 2 }),
+              paidInvoices: liveInvoices.filter((i: any) => i.status === 'Paid').length,
+              overdueInvoices: liveInvoices.filter((i: any) => i.status === 'Overdue').length,
+          };
+        }
       }
     }
 

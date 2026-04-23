@@ -1,38 +1,47 @@
 import prisma from '../lib/prisma.js';
 
 export class ClientModel {
-  static async getAllByUserId(userId: string) {
+  static async getAllByOrganizationId(organizationId: string) {
     return await prisma.client.findMany({
-      where: { userId },
+      where: { organizationId },
       orderBy: { name: 'asc' }
     });
   }
 
-  static async getById(userId: string, clientId: string) {
+  static async getById(organizationId: string, clientId: string) {
     return await prisma.client.findFirst({
       where: { 
         id: clientId,
-        userId
+        organizationId
       }
     });
   }
 
-  static async create(data: any) {
+  static async create(organizationId: string, data: any) {
     return await prisma.client.create({
-      data
+      data: {
+        ...data,
+        organizationId
+      }
     });
   }
 
-  static async update(clientId: string, data: any) {
+  static async update(organizationId: string, clientId: string, data: any) {
     return await prisma.client.update({
-      where: { id: clientId },
+      where: { 
+        id: clientId,
+        organizationId
+      },
       data
     });
   }
 
-  static async delete(clientId: string) {
+  static async delete(organizationId: string, clientId: string) {
     return await prisma.client.delete({
-      where: { id: clientId }
+      where: { 
+        id: clientId,
+        organizationId
+      }
     });
   }
 }

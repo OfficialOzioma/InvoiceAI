@@ -1,9 +1,9 @@
 import prisma from '../lib/prisma.js';
 
 export class InvoiceModel {
-  static async getAllByUserId(userId: string) {
+  static async getAllByOrganizationId(organizationId: string) {
     return await prisma.invoice.findMany({
-      where: { userId },
+      where: { organizationId },
       include: {
         client: {
           select: { name: true, email: true }
@@ -14,11 +14,11 @@ export class InvoiceModel {
     });
   }
 
-  static async getById(userId: string, invoiceId: string) {
+  static async getById(organizationId: string, invoiceId: string) {
     return await prisma.invoice.findFirst({
       where: { 
         id: invoiceId,
-        userId
+        organizationId
       },
       include: {
         client: true,
@@ -27,11 +27,13 @@ export class InvoiceModel {
     });
   }
 
-  static async create(data: any) {
+  static async create(organizationId: string, userId: string, data: any) {
     const { lineItems, ...invoiceData } = data;
     return await prisma.invoice.create({
       data: {
         ...invoiceData,
+        organizationId,
+        createdById: userId,
         lineItems: {
           create: lineItems
         }

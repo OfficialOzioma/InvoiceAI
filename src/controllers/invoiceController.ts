@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { generateInvoiceDraft, generateInsights } from '../services/geminiService.js';
 import { InvoiceModel } from '../models/Invoice.js';
+import { OrganizationModel } from '../models/Organization.js';
 
 export let INVOICES_DB = [
   { 
@@ -58,17 +59,24 @@ export const getInvoices = async (req: Request, res: Response) => {
   try {
     let invoices = [];
     const isDatabaseReady = !!process.env.DATABASE_URL;
+    let organization = null;
     
     if (isDatabaseReady) {
-      const liveInvoices = await InvoiceModel.getAllByUserId(user.id || 'mock-user-id');
-      if (liveInvoices.length > 0) {
-        invoices = liveInvoices.map((inv: any) => ({
-          ...inv,
-          clientName: inv.client?.name || 'Unknown Client',
-          total: inv.total.toString(),
-          subtotal: inv.subtotal.toString(),
-          tax: inv.tax.toString()
-        })) as any;
+      organization = await OrganizationModel.getPrimaryForUser(user.id || 'mock-user-id');
+      
+      if (organization) {
+        const liveInvoices = await InvoiceModel.getAllByOrganizationId(organization.id);
+        if (liveInvoices.length > 0) {
+          invoices = liveInvoices.map((inv: any) => ({
+            ...inv,
+            clientName: inv.client?.name || 'Unknown Client',
+            total: inv.total.toString(),
+            subtotal: inv.subtotal.toString(),
+            tax: inv.tax.toString()
+          })) as any;
+        } else {
+          invoices = INVOICES_DB;
+        }
       } else {
         invoices = INVOICES_DB;
       }
@@ -84,7 +92,7 @@ export const getInvoices = async (req: Request, res: Response) => {
       Paid: invoices.filter((i: any) => i.status === 'Paid')
     };
 
-    res.render('pages/invoices', { title: 'Ledger | InvoiceAI', layout: 'dashboard-layout', invoices, kanban });
+    res.render('pages/invoices', { title: 'Ledger | InvoiceAI', layout: 'dashboard-layout', invoices, kanban, organization });
   } catch (error) {
     console.error(error);
     res.status(500).send("Error");

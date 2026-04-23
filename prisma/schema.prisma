@@ -11,37 +11,97 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  OWNER
+  ADMIN
+  STAFF
+}
+
+model User {
+  id        String   @id @db.Uuid // Matches Supabase auth.users.id
+  email     String   @unique
+  name      String?
+  avatarUrl String?  @map("avatar_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  memberships OrganizationMember[]
+  invoices    Invoice[]            @relation("InvoiceCreator")
+
+  @@map("users")
+}
+
+model Organization {
+  id              String   @id @default(uuid()) @db.Uuid
+  name            String
+  email           String?
+  phone           String?
+  address         String?
+  logoUrl         String?  @map("logo_url")
+  taxId           String?  @map("tax_id")
+  currency        String   @default("USD")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  members         OrganizationMember[]
+  clients         Client[]
+  invoices        Invoice[]
+
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id             String       @id @default(uuid()) @db.Uuid
+  userId         String       @map("user_id") @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  role           Role         @default(STAFF)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@map("organization_members")
+}
+
 model Client {
-  id        String    @id @default(uuid()) @db.Uuid
-  userId    String    @map("user_id")
-  name      String
-  email     String?
-  phone     String?
-  address   String?
-  taxId     String?   @map("tax_id")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  invoices  Invoice[]
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  name           String
+  email          String?
+  phone          String?
+  address        String?
+  taxId          String?      @map("tax_id")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invoices       Invoice[]
 
   @@map("clients")
 }
 
 model Invoice {
-  id            String     @id @default(uuid()) @db.Uuid
-  userId        String     @map("user_id")
-  clientId      String?    @map("client_id") @db.Uuid
-  invoiceNumber String     @map("invoice_number")
-  status        String     @default("Draft")
-  subtotal      Decimal    @default(0.00) @db.Decimal(12, 2)
-  tax           Decimal    @default(0.00) @db.Decimal(12, 2)
-  total         Decimal    @default(0.00) @db.Decimal(12, 2)
-  notes         String?
-  terms         String?
-  dueDate       DateTime?  @map("due_date")
-  createdAt     DateTime   @default(now()) @map("created_at")
-  updatedAt     DateTime   @updatedAt @map("updated_at")
-  client        Client?    @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  lineItems     LineItem[]
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  createdById    String?      @map("created_by_id") @db.Uuid
+  clientId       String?      @map("client_id") @db.Uuid
+  invoiceNumber  String       @map("invoice_number")
+  status         String       @default("Draft")
+  subtotal       Decimal      @default(0.00) @db.Decimal(12, 2)
+  tax            Decimal      @default(0.00) @db.Decimal(12, 2)
+  total          Decimal      @default(0.00) @db.Decimal(12, 2)
+  notes          String?
+  terms          String?
+  dueDate        DateTime?    @map("due_date")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  creator        User?        @relation("InvoiceCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  client         Client?      @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  lineItems      LineItem[]
 
   @@map("invoices")
 }
@@ -54,22 +114,8 @@ model LineItem {
   price       Decimal  @default(0) @db.Decimal(12, 2)
   amount      Decimal  @default(0) @db.Decimal(12, 2)
   createdAt   DateTime @default(now()) @map("created_at")
+  
   invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@map("line_items")
-}
-
-model BusinessSettings {
-  id              String   @id @default(uuid()) @db.Uuid
-  userId          String   @unique @map("user_id")
-  businessName    String?  @map("business_name")
-  businessEmail   String?  @map("business_email")
-  businessPhone   String?  @map("business_phone")
-  businessAddress String?  @map("business_address")
-  logoUrl         String?  @map("logo_url")
-  taxId           String?  @map("tax_id")
-  currency        String   @default("USD")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-
-  @@map("business_settings")
 }
