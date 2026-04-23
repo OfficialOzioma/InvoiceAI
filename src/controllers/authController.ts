@@ -77,7 +77,28 @@ export const postLogin = async (req: Request, res: Response) => {
   }
 };
 
-// TODO: OAuth Callback endpoint
+export const getOAuthCallback = async (req: Request, res: Response) => {
+  try {
+    const { code } = req.query;
+    if (code) {
+      const { data, error } = await AuthService.exchangeCodeForSession(code as string);
+      if (error) throw error;
+      
+      if (data.session) {
+        res.cookie('sb-access-token', data.session.access_token, { httpOnly: true, secure: true, sameSite: 'none' });
+        res.cookie('sb-refresh-token', data.session.refresh_token, { httpOnly: true, secure: true, sameSite: 'none' });
+      }
+      
+      // We can also ensure user and org records exist here just like in verifyOtp,
+      // but for simpicity, we'll direct them towards the dashboard.
+      return res.redirect('/dashboard');
+    }
+    res.redirect('/login');
+  } catch (error: any) {
+    console.error('OAuth Callback error:', error);
+    res.redirect('/login?error=oauth_failed');
+  }
+};
 
 export const logout = (req: Request, res: Response) => {
   res.clearCookie('sb-access-token');
