@@ -10,8 +10,11 @@
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
         <div class="bg-white py-12 px-8 shadow-2xl shadow-blue-500/5 rounded-[32px] sm:rounded-[40px] border border-slate-100 space-y-8">
             <% if (typeof error !== 'undefined' && error) { %>
-                <div class="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-bold border border-red-100">
-                    <%= error === 'invalid_credentials' ? 'Invalid email or password.' : error %>
+                <div class="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium border border-red-100 flex gap-2 text-left items-start">
+                    <svg class="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>
+                        <%= error === 'invalid_credentials' ? 'Invalid email or password. If you originally signed up with Google, please continue using the Google button below.' : error %>
+                    </span>
                 </div>
             <% } %>
 

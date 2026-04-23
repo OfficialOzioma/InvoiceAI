@@ -65,13 +65,14 @@ export class AuthService {
     return await supabase.auth.exchangeCodeForSession(code);
   }
 
-  static getGoogleOAuthUrl() {
-    const { data } = supabase.auth.signInWithOAuth({
+  static async getGoogleOAuthUrl() {
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/auth/callback` : 'http://localhost:3000/auth/callback'
       }
     });
+    if (error) throw error;
     return data;
   }
 }
