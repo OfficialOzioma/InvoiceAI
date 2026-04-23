@@ -1,0 +1,75 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Client {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id")
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  taxId     String?   @map("tax_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  invoices  Invoice[]
+
+  @@map("clients")
+}
+
+model Invoice {
+  id            String     @id @default(uuid()) @db.Uuid
+  userId        String     @map("user_id")
+  clientId      String?    @map("client_id") @db.Uuid
+  invoiceNumber String     @map("invoice_number")
+  status        String     @default("Draft")
+  subtotal      Decimal    @default(0.00) @db.Decimal(12, 2)
+  tax           Decimal    @default(0.00) @db.Decimal(12, 2)
+  total         Decimal    @default(0.00) @db.Decimal(12, 2)
+  notes         String?
+  terms         String?
+  dueDate       DateTime?  @map("due_date")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+  client        Client?    @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  lineItems     LineItem[]
+
+  @@map("invoices")
+}
+
+model LineItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  invoiceId   String   @map("invoice_id") @db.Uuid
+  description String
+  quantity    Decimal  @default(1) @db.Decimal(12, 2)
+  price       Decimal  @default(0) @db.Decimal(12, 2)
+  amount      Decimal  @default(0) @db.Decimal(12, 2)
+  createdAt   DateTime @default(now()) @map("created_at")
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("line_items")
+}
+
+model BusinessSettings {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @unique @map("user_id")
+  businessName    String?  @map("business_name")
+  businessEmail   String?  @map("business_email")
+  businessPhone   String?  @map("business_phone")
+  businessAddress String?  @map("business_address")
+  logoUrl         String?  @map("logo_url")
+  taxId           String?  @map("tax_id")
+  currency        String   @default("USD")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("business_settings")
+}

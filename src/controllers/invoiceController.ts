@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { generateInvoiceDraft, generateInsights } from '../services/geminiService.js';
+import { InvoiceModel } from '../models/Invoice.js';
 
 export let INVOICES_DB = [
   { 
@@ -55,14 +56,32 @@ export const getInvoices = async (req: Request, res: Response) => {
   if (!user) return res.redirect('/login');
 
   try {
-    const invoices = INVOICES_DB;
+    let invoices = [];
+    const supabaseEnabled = process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY;
+    
+    if (supabaseEnabled) {
+      const liveInvoices = await InvoiceModel.getAllByUserId(user.id || 'mock-user-id');
+      if (liveInvoices.length > 0) {
+        invoices = liveInvoices.map((inv: any) => ({
+          ...inv,
+          clientName: inv.client?.name || 'Unknown Client',
+          total: inv.total.toString(),
+          subtotal: inv.subtotal.toString(),
+          tax: inv.tax.toString()
+        })) as any;
+      } else {
+        invoices = INVOICES_DB;
+      }
+    } else {
+      invoices = INVOICES_DB;
+    }
     
     // Group invoices for Kanban View Server-Side
     const kanban = {
-      Draft: invoices.filter(i => i.status === 'Draft'),
-      Pending: invoices.filter(i => i.status === 'Pending'),
-      Overdue: invoices.filter(i => i.status === 'Overdue'),
-      Paid: invoices.filter(i => i.status === 'Paid')
+      Draft: invoices.filter((i: any) => i.status === 'Draft'),
+      Pending: invoices.filter((i: any) => i.status === 'Pending'),
+      Overdue: invoices.filter((i: any) => i.status === 'Overdue'),
+      Paid: invoices.filter((i: any) => i.status === 'Paid')
     };
 
     res.render('pages/invoices', { title: 'Ledger | InvoiceAI', layout: 'dashboard-layout', invoices, kanban });

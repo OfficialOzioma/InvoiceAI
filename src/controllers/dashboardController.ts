@@ -1,4 +1,6 @@
 import { Request, Response } from 'express';
+import { InvoiceModel } from '../models/Invoice.js';
+import { BusinessSettingsModel } from '../models/BusinessSettings.js';
 
 const MOCK_INVOICES = [
   { id: 'INV-001', invoiceNumber: 'INV-2026-001', clientName: 'Globex Corp', total: '1,450.00', status: 'Paid', createdAt: new Date() },
@@ -31,8 +33,40 @@ export const getDashboard = async (req: Request, res: Response) => {
 
   try {
     const activeWorkspaceId = 'mock-workspace-id';
-    const invoices = MOCK_INVOICES;
-    const stats = MOCK_STATS;
+    let invoices = MOCK_INVOICES;
+    let stats = MOCK_STATS;
+
+    const supabaseEnabled = process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY;
+    if (supabaseEnabled) {
+      const liveInvoices = await InvoiceModel.getAllByUserId(user.id || 'mock-id');
+      if (liveInvoices.length > 0) {
+        invoices = liveInvoices.slice(0, 5).map((inv: any) => ({
+          id: inv.id,
+          invoiceNumber: inv.invoiceNumber,
+          clientName: inv.client?.name || 'Unknown Client',
+          total: inv.total.toString(),
+          status: inv.status,
+          createdAt: inv.createdAt
+        })) as any;
+        
+        // Calculate basic stats from live data
+        const totalRev = liveInvoices
+            .filter((i: any) => i.status === 'Paid')
+            .reduce((sum: number, i: any) => sum + parseFloat(i.total || 0), 0);
+        
+        const outstanding = liveInvoices
+            .filter((i: any) => i.status === 'Pending')
+            .reduce((sum: number, i: any) => sum + parseFloat(i.total || 0), 0);
+
+        stats = {
+            ...MOCK_STATS,
+            totalRevenue: totalRev.toLocaleString('en-US', { minimumFractionDigits: 2 }),
+            outstanding: outstanding.toLocaleString('en-US', { minimumFractionDigits: 2 }),
+            paidInvoices: liveInvoices.filter((i: any) => i.status === 'Paid').length,
+            overdueInvoices: liveInvoices.filter((i: any) => i.status === 'Overdue').length,
+        };
+      }
+    }
 
     res.render('pages/dashboard', {
       title: 'Dashboard | InvoiceAI',
