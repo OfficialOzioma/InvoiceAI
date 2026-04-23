@@ -24,7 +24,7 @@ export const postSignup = async (req: Request, res: Response) => {
     const { businessName, email, password, provider } = req.body;
     
     if (provider === 'google') {
-      const { url } = AuthService.getGoogleOAuthUrl();
+      const { url } = await AuthService.getGoogleOAuthUrl();
       if (url) return res.redirect(url);
       return res.redirect('/signup?error=oauth_failed');
     }
@@ -81,7 +81,7 @@ export const getOAuthCallback = async (req: Request, res: Response) => {
   try {
     const { code } = req.query;
     if (code) {
-      const { data, error } = await AuthService.exchangeCodeForSession(code as string);
+      const { data, error } = await (AuthService as any).exchangeCodeForSession(code as string);
       if (error) throw error;
       
       if (data.session) {
