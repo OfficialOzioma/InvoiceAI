@@ -36,8 +36,8 @@ export const getDashboard = async (req: Request, res: Response) => {
     let invoices = MOCK_INVOICES;
     let stats = MOCK_STATS;
 
-    const supabaseEnabled = process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY;
-    if (supabaseEnabled) {
+    const isDatabaseReady = !!process.env.DATABASE_URL;
+    if (isDatabaseReady) {
       const liveInvoices = await InvoiceModel.getAllByUserId(user.id || 'mock-id');
       if (liveInvoices.length > 0) {
         invoices = liveInvoices.slice(0, 5).map((inv: any) => ({

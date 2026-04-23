@@ -57,9 +57,9 @@ export const getInvoices = async (req: Request, res: Response) => {
 
   try {
     let invoices = [];
-    const supabaseEnabled = process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY;
+    const isDatabaseReady = !!process.env.DATABASE_URL;
     
-    if (supabaseEnabled) {
+    if (isDatabaseReady) {
       const liveInvoices = await InvoiceModel.getAllByUserId(user.id || 'mock-user-id');
       if (liveInvoices.length > 0) {
         invoices = liveInvoices.map((inv: any) => ({
