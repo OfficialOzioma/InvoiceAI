@@ -9,14 +9,23 @@
 
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
         <div class="bg-white py-12 px-8 shadow-2xl shadow-blue-500/5 sm:rounded-[40px] border border-slate-100 space-y-8">
-            <form action="/auth/verify-otp" method="POST" class="space-y-8">
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-bold border border-red-100">
+                    <%= error === 'invalid_otp' ? 'Invalid or expired code. Please try again.' : error %>
+                </div>
+            <% } %>
+
+            <form action="/auth/verify-otp" method="POST" id="otp-form" class="space-y-8">
+                <input type="hidden" name="email" value="<%= email %>" />
+                <input type="hidden" name="otp" id="otp-hidden-input" />
+                
                 <div class="flex justify-between gap-2">
-                    <input type="text" maxlength="1" class="w-12 h-16 text-center text-2xl font-black bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-primary focus:bg-white transition-all">
-                    <input type="text" maxlength="1" class="w-12 h-16 text-center text-2xl font-black bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-primary focus:bg-white transition-all">
-                    <input type="text" maxlength="1" class="w-12 h-16 text-center text-2xl font-black bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-primary focus:bg-white transition-all">
-                    <input type="text" maxlength="1" class="w-12 h-16 text-center text-2xl font-black bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-primary focus:bg-white transition-all">
-                    <input type="text" maxlength="1" class="w-12 h-16 text-center text-2xl font-black bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-primary focus:bg-white transition-all">
-                    <input type="text" maxlength="1" class="w-12 h-16 text-center text-2xl font-black bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-primary focus:bg-white transition-all">
+                    <input type="text" maxlength="1" class="otp-input w-12 h-16 text-center text-2xl font-black bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-primary focus:bg-white transition-all">
+                    <input type="text" maxlength="1" class="otp-input w-12 h-16 text-center text-2xl font-black bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-primary focus:bg-white transition-all">
+                    <input type="text" maxlength="1" class="otp-input w-12 h-16 text-center text-2xl font-black bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-primary focus:bg-white transition-all">
+                    <input type="text" maxlength="1" class="otp-input w-12 h-16 text-center text-2xl font-black bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-primary focus:bg-white transition-all">
+                    <input type="text" maxlength="1" class="otp-input w-12 h-16 text-center text-2xl font-black bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-primary focus:bg-white transition-all">
+                    <input type="text" maxlength="1" class="otp-input w-12 h-16 text-center text-2xl font-black bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-primary focus:bg-white transition-all">
                 </div>
 
                 <button type="submit" class="w-full bg-primary text-white py-5 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-secondary transition-all shadow-xl shadow-blue-100">
@@ -39,18 +48,57 @@
 </main>
 
 <script>
-    // Simple auto-focus for OTP inputs
-    const inputs = document.querySelectorAll('input[maxlength="1"]');
+    // Simple auto-focus and combine for OTP inputs
+    const inputs = document.querySelectorAll('.otp-input');
+    const hiddenInput = document.getElementById('otp-hidden-input');
+    const form = document.getElementById('otp-form');
+
     inputs.forEach((input, index) => {
         input.addEventListener('input', (e) => {
             if (e.target.value.length === 1 && index < inputs.length - 1) {
                 inputs[index + 1].focus();
             }
+            updateHiddenInput();
         });
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Backspace' && !e.target.value && index > 0) {
                 inputs[index - 1].focus();
             }
         });
+        
+        // Setup pasting across inputs
+        input.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const pastedData = e.clipboardData.getData('text').slice(0, 6);
+            if (/^\d+$/.test(pastedData)) {
+                for(let i = 0; i < pastedData.length; i++) {
+                    if(inputs[i]) {
+                        inputs[i].value = pastedData[i];
+                    }
+                }
+                updateHiddenInput();
+                if (pastedData.length < 6) {
+                    inputs[pastedData.length].focus();
+                } else {
+                    inputs[5].focus();
+                }
+            }
+        });
+    });
+
+    function updateHiddenInput() {
+        let otpValue = '';
+        inputs.forEach(input => {
+            otpValue += input.value;
+        });
+        hiddenInput.value = otpValue;
+    }
+
+    form.addEventListener('submit', (e) => {
+        updateHiddenInput();
+        if (hiddenInput.value.length !== 6) {
+            e.preventDefault();
+            alert('Please enter a valid 6-digit code');
+        }
     });
 </script>

@@ -1,59 +1,87 @@
 import { Request, Response } from 'express';
+import { AuthService } from '../services/authService.js';
 
 export const getLogin = (req: Request, res: Response) => {
-  res.render('pages/login', { title: 'Log In | InvoiceAI' });
+  res.render('pages/login', { title: 'Log In | InvoiceAI', error: req.query.error });
 };
 
 export const getSignup = (req: Request, res: Response) => {
-  res.render('pages/signup', { title: 'Sign Up | InvoiceAI' });
+  res.render('pages/signup', { title: 'Sign Up | InvoiceAI', error: req.query.error });
 };
 
 export const getForgotPassword = (req: Request, res: Response) => {
-  res.render('pages/forgot-password', { title: 'Forgot Password | InvoiceAI' });
+  res.render('pages/forgot-password', { title: 'Forgot Password | InvoiceAI', success: false });
 };
 
 export const getVerifyOtp = (req: Request, res: Response) => {
-  res.render('pages/verify-otp', { title: 'Verify Email | InvoiceAI' });
+  const email = req.query.email as string;
+  if (!email) return res.redirect('/signup');
+  res.render('pages/verify-otp', { title: 'Verify Email | InvoiceAI', email, error: req.query.error });
 };
 
 export const postSignup = async (req: Request, res: Response) => {
-  const { businessName, email, password, provider } = req.body;
-  
-  // Logic:
-  // 1. Create user in Firebase Auth
-  // 2. Create entry in Firestore: { email, onboardingStatus: 'in-progress', currentOnboardingStep: 1, isVerified: provider === 'google' }
-  
-  if (provider === 'google') {
-    res.cookie('session', 'mock-google-session', { httpOnly: true, secure: true, sameSite: 'none' });
-    return res.redirect('/onboarding/step/1');
-  }
+  try {
+    const { businessName, email, password, provider } = req.body;
+    
+    if (provider === 'google') {
+      const { url } = AuthService.getGoogleOAuthUrl();
+      if (url) return res.redirect(url);
+      return res.redirect('/signup?error=oauth_failed');
+    }
 
-  // Email path: send OTP and verify
-  res.cookie('session', 'temp-session', { httpOnly: true, secure: true, sameSite: 'none' });
-  res.redirect('/verify-otp');
+    // Email path: sign up, sends OTP automatically if email confirmations are on
+    await AuthService.signup(email, password, businessName);
+    
+    // Redirect to verify OTP page, passing the email via query string
+    res.redirect(`/verify-otp?email=${encodeURIComponent(email)}`);
+  } catch (error: any) {
+    console.error('Signup error:', error);
+    res.redirect('/signup?error=' + encodeURIComponent(error.message));
+  }
 };
 
 export const postVerifyOtp = async (req: Request, res: Response) => {
-  // 1. Check if OTP is correct
-  // 2. Update Firestore: isVerified = true
-  res.redirect('/onboarding/step/1');
+  try {
+    const { email, otp } = req.body;
+    
+    const data = await AuthService.verifyOtp(email, otp);
+    
+    // Set cookie sessions
+    if (data.session) {
+      res.cookie('sb-access-token', data.session.access_token, { httpOnly: true, secure: true, sameSite: 'none' });
+      res.cookie('sb-refresh-token', data.session.refresh_token, { httpOnly: true, secure: true, sameSite: 'none' });
+    }
+
+    res.redirect('/onboarding');
+  } catch (error: any) {
+    console.error('Verify OTP error:', error);
+    res.redirect(`/verify-otp?email=${encodeURIComponent(req.body.email)}&error=invalid_otp`);
+  }
 };
 
 export const postLogin = async (req: Request, res: Response) => {
-  // Simplified login for this migration demo
-  // In a real app, verify with Firebase Admin
-  const { email, password } = req.body;
-  
-  if (email === 'admin@invoiceai.com' && password === 'password123') {
-     // Set a session cookie (mocked for now)
-     res.cookie('session', 'mock-session-id', { httpOnly: true, secure: true, sameSite: 'none' });
-     return res.redirect('/dashboard');
+  try {
+    const { email, password } = req.body;
+    
+    const data = await AuthService.login(email, password);
+    
+    if (data.session) {
+      res.cookie('sb-access-token', data.session.access_token, { httpOnly: true, secure: true, sameSite: 'none' });
+      res.cookie('sb-refresh-token', data.session.refresh_token, { httpOnly: true, secure: true, sameSite: 'none' });
+    }
+    
+    res.redirect('/dashboard');
+  } catch (error: any) {
+    console.error('Login error:', error);
+    res.redirect('/login?error=invalid_credentials');
   }
-  
-  res.redirect('/login?error=invalid');
 };
 
+// TODO: OAuth Callback endpoint
+
 export const logout = (req: Request, res: Response) => {
-  res.clearCookie('session');
+  res.clearCookie('sb-access-token');
+  res.clearCookie('sb-refresh-token');
   res.redirect('/');
 };
+

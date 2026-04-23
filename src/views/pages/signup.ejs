@@ -9,6 +9,12 @@
 
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
         <div class="bg-white py-12 px-8 shadow-2xl shadow-blue-500/5 rounded-[32px] sm:rounded-[40px] border border-slate-100 space-y-8">
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-bold border border-red-100">
+                    <%= error %>
+                </div>
+            <% } %>
+
             <form action="/auth/signup" method="POST">
                 <input type="hidden" name="provider" value="google">
                 <button type="submit" class="w-full bg-white border border-slate-200 text-secondary py-5 rounded-xl font-bold text-xs uppercase tracking-widest hover:border-primary transition-all flex items-center justify-center gap-3">
