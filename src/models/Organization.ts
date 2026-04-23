@@ -5,6 +5,7 @@ export class OrganizationModel {
     return await prisma.organization.findUnique({
       where: { id: organizationId },
       include: {
+        settings: true,
         members: {
           include: {
             user: true
@@ -19,7 +20,11 @@ export class OrganizationModel {
     const membership = await prisma.organizationMember.findFirst({
       where: { userId },
       include: {
-        organization: true
+        organization: {
+          include: {
+            settings: true
+          }
+        }
       },
       orderBy: {
         createdAt: 'asc'

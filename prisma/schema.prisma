@@ -46,8 +46,34 @@ model Organization {
   members         OrganizationMember[]
   clients         Client[]
   invoices        Invoice[]
+  settings        OrganizationSettings?
 
   @@map("organizations")
+}
+
+model OrganizationSettings {
+  id                  String       @id @default(uuid()) @db.Uuid
+  organizationId      String       @unique @map("organization_id") @db.Uuid
+  
+  // Branding
+  brandColor          String?      @map("brand_color")
+  website             String?
+
+  // Payment & Billing Integration
+  stripeAccountId     String?      @unique @map("stripe_account_id")
+  bankDetails         String?      @map("bank_details")
+  defaultPaymentTerms String?      @default("Due on receipt") @map("default_payment_terms")
+  
+  // Customization
+  invoicePrefix       String?      @default("INV") @map("invoice_prefix")
+  invoiceFooter       String?      @map("invoice_footer")
+
+  createdAt           DateTime     @default(now()) @map("created_at")
+  updatedAt           DateTime     @updatedAt @map("updated_at")
+
+  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("organization_settings")
 }
 
 model OrganizationMember {
