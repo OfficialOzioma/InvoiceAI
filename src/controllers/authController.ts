@@ -24,7 +24,7 @@ export const getVerifyOtp = (req: Request, res: Response) => {
 export const postSignup = async (req: Request, res: Response) => {
   try {
     const { fullName, email, password, provider } = req.body;
-
+    
     if (provider === 'google') {
       const host = req.get('host') || 'localhost:3000';
       const { url } = await AuthService.getGoogleOAuthUrl(host);
@@ -34,13 +34,13 @@ export const postSignup = async (req: Request, res: Response) => {
 
     // Email path: sign up, sends OTP automatically if email confirmations are on
     await AuthService.signup(email, password, fullName);
-
+    
     // Redirect to verify OTP page, passing the email via query string
     res.redirect(`/verify-otp?email=${encodeURIComponent(email)}`);
   } catch (error: any) {
     console.error('Signup error:', error);
     if (error.message.includes('User already registered')) {
-      return res.redirect('/signup?error=user_exists');
+        return res.redirect('/signup?error=user_exists');
     }
     res.redirect('/signup?error=' + encodeURIComponent(error.message));
   }
@@ -49,9 +49,9 @@ export const postSignup = async (req: Request, res: Response) => {
 export const postVerifyOtp = async (req: Request, res: Response) => {
   try {
     const { email, otp } = req.body;
-
+    
     const data = await AuthService.verifyOtp(email, otp);
-
+    
     // Set cookie sessions
     if (data.session) {
       res.cookie('sb-access-token', data.session.access_token, { httpOnly: true, secure: true, sameSite: 'none' });
@@ -68,20 +68,20 @@ export const postVerifyOtp = async (req: Request, res: Response) => {
 export const postLogin = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
-
+    
     const data = await AuthService.login(email, password);
-
+    
     if (data.session) {
       res.cookie('sb-access-token', data.session.access_token, { httpOnly: true, secure: true, sameSite: 'none' });
       res.cookie('sb-refresh-token', data.session.refresh_token, { httpOnly: true, secure: true, sameSite: 'none' });
     }
-
+    
     res.redirect('/dashboard');
   } catch (error: any) {
     console.error('Login error:', error);
     // Specifically catch Supabase's generic invalid credentials message to prompt Google users.
     if (error.message.includes('Invalid login credentials')) {
-      return res.redirect('/login?error=invalid_credentials');
+       return res.redirect('/login?error=invalid_credentials');
     }
     res.redirect('/login?error=' + encodeURIComponent(error.message));
   }
@@ -90,25 +90,25 @@ export const postLogin = async (req: Request, res: Response) => {
 export const getOAuthCallback = async (req: Request, res: Response) => {
   try {
     const { code, error, error_description } = req.query;
-
+    
     if (error) {
-      console.error('Supabase OAuth Error parameters:', error, error_description);
-      return res.redirect('/login?error=' + encodeURIComponent(error_description as string || 'OAuth failed from provider'));
+       console.error('Supabase OAuth Error parameters:', error, error_description);
+       return res.redirect('/login?error=' + encodeURIComponent(error_description as string || 'OAuth failed from provider'));
     }
 
     if (code) {
       const { data, error: sessionError } = await AuthService.exchangeCodeForSession(code as string);
       if (sessionError) throw sessionError;
-
+      
       if (data?.session) {
         res.cookie('sb-access-token', data.session.access_token, { httpOnly: true, secure: true, sameSite: 'none' });
         res.cookie('sb-refresh-token', data.session.refresh_token, { httpOnly: true, secure: true, sameSite: 'none' });
-
+        
         const supabaseUser = data.user;
         if (supabaseUser) {
           // If the user doesn't physically exist in our DB yet, it's a first-time Google signin
           const existingUser = await UserModel.getById(supabaseUser.id);
-
+          
           if (!existingUser) {
             // New user via Google OAuth, create Prisma wrapper immediately
             await UserModel.upsert(supabaseUser.id, supabaseUser.email || '', supabaseUser.user_metadata?.full_name);
@@ -122,10 +122,10 @@ export const getOAuthCallback = async (req: Request, res: Response) => {
           }
         }
       }
-
+      
       return res.redirect('/dashboard');
     }
-
+    
     // If no code and no error was passed, we reached the callback mysteriously
     console.error('Callback reached without an OAuth code.');
     res.redirect('/login?error=missing_oauth_code');

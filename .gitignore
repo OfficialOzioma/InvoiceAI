@@ -2,8 +2,6 @@ node_modules/
 build/
 dist/
 coverage/
-public/css/
-.agents/
 .DS_Store
 *.log
 .env*
