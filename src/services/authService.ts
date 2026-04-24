@@ -1,105 +1,37 @@
-import { supabase } from '../lib/supabase.js';
-import { UserModel } from '../models/User.js';
-import { OrganizationModel } from '../models/Organization.js';
-
 export class AuthService {
   static async signup(email: string, password?: string, fullName?: string) {
-    // We pass fullName in metadata so we can retrieve it when creating the PRISMA user
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password: password || 'Password123!', // Simple fallback if not provided
-      options: {
-        data: {
-          full_name: fullName || ''
-        }
-      }
-    });
-
-    if (error) throw error;
-    return data;
+    console.log('Mock signup', email);
+    return { user: { id: 'mock-user-id', email, user_metadata: { full_name: fullName } } };
   }
 
   static async verifyOtp(email: string, token: string) {
-    const isTokenHash = token.length > 6;
-
-    let result;
-    if (isTokenHash) {
-      result = await supabase.auth.verifyOtp({ token_hash: token, type: 'signup' });
-      if (result.error && result.error.message.includes('Token has expired or is invalid')) {
-        console.log("Fallback to email type for token_hash");
-        result = await supabase.auth.verifyOtp({ token_hash: token, type: 'email' });
-      }
-    } else {
-      result = await supabase.auth.verifyOtp({ email, token, type: 'signup' });
-      if (result.error && result.error.message.includes('Token has expired or is invalid')) {
-        console.log("Fallback to email type for 6-digit PIN");
-        result = await supabase.auth.verifyOtp({ email, token, type: 'email' });
-      }
-    }
-
-    // console.log("verifyOtp result:", JSON.stringify(result, null, 2));
-
-    let { data, error } = result;
-    if (error) {
-      console.error("Supabase OTP Error:", error.message);
-      throw new Error('Supabase OTP Error: ' + error.message);
-    }
-    if (!data) throw new Error('Invalid OTP data (data is null)');
-
-    let user = data.user;
-
-    if (user) {
-      // Create user entry in Prisma
-      await UserModel.upsert(user.id, user.email || email, user.user_metadata?.full_name);
-      console.log("User created in Prisma:", JSON.stringify(user, null, 2));
-      // We skip Organization creation here now.
-      // Organizations will be strictly created during the Onboarding Flow later!
-    } else {
-      throw new Error('User not found after OTP verification.');
-    }
-
-    return data;
+    console.log('Mock verifyOtp', email, token);
+    return { user: { id: 'mock-user-id', email } };
   }
 
   static async login(email: string, password: string) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-
-    if (error) throw error;
-    return data;
+    console.log('Mock login', email);
+    return {
+      user: { id: 'mock-user-id', email },
+      session: { access_token: 'mock_access_token', refresh_token: 'mock_refresh_token' }
+    };
   }
 
   static async resetPassword(email: string) {
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'http://localhost:3000/auth/update-password',
-    });
-    if (error) throw error;
-    return data;
+    console.log('Mock resetPassword', email);
+    return true;
   }
 
   static async exchangeCodeForSession(code: string) {
-    return await supabase.auth.exchangeCodeForSession(code);
+    return { session: { access_token: 'mock_access_token', refresh_token: 'mock_refresh_token' } };
   }
 
   static async getGoogleOAuthUrl(host: string) {
-    // Dynamically detect if we are on Cloud Run or Localhost
-    const isCloudRun = host.includes('run.app');
-    const protocol = isCloudRun ? 'https' : 'http';
-    const redirectUri = `${protocol}://${host}/auth/callback`;
-
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: redirectUri
-      }
-    });
-    if (error) throw error;
-    return data;
+    return { url: '/auth/callback?code=mock_google_code' };
   }
 
   static async getUserByToken(token: string) {
-    return await supabase.auth.getUser(token);
+    return { data: { user: { id: 'mock-user-id', email: 'mock@example.com' } }, error: null };
   }
 }
+
