@@ -20,15 +20,19 @@ export class AuthService {
   }
 
   static async verifyOtp(email: string, token: string) {
-    const { data, error } = await supabase.auth.verifyOtp({
-      email,
-      token,
-      type: 'signup'
-    });
+    const isTokenHash = token.length > 6;
+    
+    let result;
+    if (isTokenHash) {
+      result = await supabase.auth.verifyOtp({ token_hash: token, type: 'email' });
+    } else {
+      result = await supabase.auth.verifyOtp({ email, token, type: 'signup' });
+    }
 
+    const { data, error } = result;
     if (error) throw error;
 
-    const user = data.user;
+    const user = data?.user;
     if (user) {
       // Create user entry in Prisma
       await UserModel.upsert(user.id, user.email || email, user.user_metadata?.full_name);
