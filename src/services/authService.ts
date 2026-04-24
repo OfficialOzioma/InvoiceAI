@@ -72,7 +72,6 @@ export class AuthService {
         redirectTo: process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/auth/callback` : 'http://localhost:3000/auth/callback'
       }
     });
-
     if (error) throw error;
     return data;
   }

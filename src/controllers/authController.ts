@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/authService.js';
+import { UserModel } from '../models/User.js';
+import { OrganizationModel } from '../models/Organization.js';
 
 export const getLogin = (req: Request, res: Response) => {
   res.render('pages/login', { title: 'Log In | InvoiceAI', error: req.query.error });
@@ -36,6 +38,9 @@ export const postSignup = async (req: Request, res: Response) => {
     res.redirect(`/verify-otp?email=${encodeURIComponent(email)}`);
   } catch (error: any) {
     console.error('Signup error:', error);
+    if (error.message.includes('User already registered')) {
+        return res.redirect('/signup?error=user_exists');
+    }
     res.redirect('/signup?error=' + encodeURIComponent(error.message));
   }
 };
@@ -73,7 +78,11 @@ export const postLogin = async (req: Request, res: Response) => {
     res.redirect('/dashboard');
   } catch (error: any) {
     console.error('Login error:', error);
-    res.redirect('/login?error=invalid_credentials');
+    // Specifically catch Supabase's generic invalid credentials message to prompt Google users.
+    if (error.message.includes('Invalid login credentials')) {
+       return res.redirect('/login?error=invalid_credentials');
+    }
+    res.redirect('/login?error=' + encodeURIComponent(error.message));
   }
 };
 
@@ -87,10 +96,26 @@ export const getOAuthCallback = async (req: Request, res: Response) => {
       if (data.session) {
         res.cookie('sb-access-token', data.session.access_token, { httpOnly: true, secure: true, sameSite: 'none' });
         res.cookie('sb-refresh-token', data.session.refresh_token, { httpOnly: true, secure: true, sameSite: 'none' });
+        
+        const supabaseUser = data.user;
+        if (supabaseUser) {
+          // If the user doesn't physically exist in our DB yet, it's a first-time Google signin
+          const existingUser = await UserModel.getById(supabaseUser.id);
+          
+          if (!existingUser) {
+            // New user via Google OAuth, create Prisma wrapper immediately
+            await UserModel.upsert(supabaseUser.id, supabaseUser.email || '', supabaseUser.user_metadata?.full_name);
+            return res.redirect('/onboarding');
+          }
+
+          // Existing user check: do they have an organization?
+          const organization = await OrganizationModel.getPrimaryForUser(supabaseUser.id);
+          if (!organization) {
+            return res.redirect('/onboarding');
+          }
+        }
       }
       
-      // We can also ensure user and org records exist here just like in verifyOtp,
-      // but for simpicity, we'll direct them towards the dashboard.
       return res.redirect('/dashboard');
     }
     res.redirect('/login');
