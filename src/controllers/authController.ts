@@ -1,7 +1,5 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/authService.js';
-import { UserModel } from '../models/User.js';
-import { OrganizationModel } from '../models/Organization.js';
 
 export const getLogin = (req: Request, res: Response) => {
   res.render('pages/login', { title: 'Log In | InvoiceAI', error: req.query.error });
@@ -107,22 +105,8 @@ export const getOAuthCallback = async (req: Request, res: Response) => {
         res.cookie('sb-refresh-token', data.session.refresh_token, { httpOnly: true, secure: true, sameSite: 'none' });
         
         const supabaseUser = data.user;
-        if (supabaseUser) {
-          // If the user doesn't physically exist in our DB yet, it's a first-time Google signin
-          const existingUser = await UserModel.getById(supabaseUser.id);
-          
-          if (!existingUser) {
-            // New user via Google OAuth, create Prisma wrapper immediately
-            await UserModel.upsert(supabaseUser.id, supabaseUser.email || '', supabaseUser.user_metadata?.full_name);
-            return res.redirect('/onboarding');
-          }
-
-          // Existing user check: do they have an organization?
-          const organization = await OrganizationModel.getPrimaryForUser(supabaseUser.id);
-          if (!organization) {
-            return res.redirect('/onboarding');
-          }
-        }
+        // DB removed for now, redirect to dashboard by default
+        return res.redirect('/dashboard');
       }
       
       return res.redirect('/dashboard');
@@ -213,21 +197,9 @@ export const postOAuthSession = async (req: Request, res: Response) => {
     res.cookie('sb-access-token', access_token, { httpOnly: true, secure: true, sameSite: 'none' });
     res.cookie('sb-refresh-token', refresh_token, { httpOnly: true, secure: true, sameSite: 'none' });
 
-    // Handle existing vs new user
-    const existingUser = await UserModel.getById(user.id);
+    // Handle existing vs new user (DB removed for now)
     let redirectUrl = '/dashboard';
-
-    if (!existingUser) {
-      // New user via Google OAuth, create Prisma wrapper immediately
-      await UserModel.upsert(user.id, user.email || '', user.user_metadata?.full_name);
-      redirectUrl = '/onboarding';
-    } else {
-      const organization = await OrganizationModel.getPrimaryForUser(user.id);
-      if (!organization) {
-        redirectUrl = '/onboarding';
-      }
-    }
-
+    // Assume redirect to dashboard for now
     res.json({ success: true, redirect: redirectUrl });
   } catch (error: any) {
     console.error('OAuth session error:', error);

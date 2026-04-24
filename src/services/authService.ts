@@ -1,6 +1,4 @@
 import { supabase } from '../lib/supabase.js';
-import { UserModel } from '../models/User.js';
-import { OrganizationModel } from '../models/Organization.js';
 
 export class AuthService {
   static async signup(email: string, password?: string, fullName?: string) {
@@ -48,8 +46,7 @@ export class AuthService {
 
     let user = data.user;
     if (user) {
-      // Create user entry in Prisma
-      await UserModel.upsert(user.id, user.email || email, user.user_metadata?.full_name);
+      // Prisma DB removed for now
       
       // We skip Organization creation here now.
       // Organizations will be strictly created during the Onboarding Flow later!
