@@ -26,18 +26,27 @@ export class AuthService {
     if (isTokenHash) {
       result = await supabase.auth.verifyOtp({ token_hash: token, type: 'signup' });
       if (result.error && result.error.message.includes('Token has expired or is invalid')) {
-         // Fallback to 'email' if signup type fails
+         console.log("Fallback to email type for token_hash");
          result = await supabase.auth.verifyOtp({ token_hash: token, type: 'email' });
       }
     } else {
       result = await supabase.auth.verifyOtp({ email, token, type: 'signup' });
+      if (result.error && result.error.message.includes('Token has expired or is invalid')) {
+         console.log("Fallback to email type for 6-digit PIN");
+         result = await supabase.auth.verifyOtp({ email, token, type: 'email' });
+      }
     }
 
-    const { data, error } = result;
-    if (error) throw error;
-    if (!data) throw new Error('Invalid OTP data');
+    console.log("verifyOtp result:", JSON.stringify(result, null, 2));
 
-    const user = data.user;
+    let { data, error } = result;
+    if (error) {
+       console.error("Supabase OTP Error:", error.message);
+       throw new Error('Supabase OTP Error: ' + error.message);
+    }
+    if (!data) throw new Error('Invalid OTP data (data is null)');
+
+    let user = data.user;
     if (user) {
       // Create user entry in Prisma
       await UserModel.upsert(user.id, user.email || email, user.user_metadata?.full_name);

@@ -48,7 +48,8 @@ export const postSignup = async (req: Request, res: Response) => {
 
 export const postVerifyOtp = async (req: Request, res: Response) => {
   try {
-    const { email, otp } = req.body;
+    const email = (req.body.email || '').trim();
+    const otp = (req.body.otp || '').trim();
     
     const data = await AuthService.verifyOtp(email, otp);
     
@@ -61,7 +62,8 @@ export const postVerifyOtp = async (req: Request, res: Response) => {
     res.redirect('/onboarding');
   } catch (error: any) {
     console.error('Verify OTP error:', error);
-    res.redirect(`/verify-otp?email=${encodeURIComponent(req.body.email)}&error=invalid_otp`);
+    // Include the actual error message so the user can debug it rather than generic valid_otp
+    res.redirect(`/verify-otp?email=${encodeURIComponent(req.body.email)}&error=${encodeURIComponent(error.message || 'invalid_otp')}`);
   }
 };
 
@@ -135,13 +137,18 @@ export const getOAuthCallback = async (req: Request, res: Response) => {
       <html>
       <head><title>Authenticating...</title></head>
       <body>
+        <p id="status">Processing authentication...</p>
         <script>
           const hash = window.location.hash;
+          const statusEl = document.getElementById('status');
+          
           if (hash && hash.includes('access_token')) {
             const params = new URLSearchParams(hash.substring(1));
             const accessToken = params.get('access_token');
             const refreshToken = params.get('refresh_token');
+            
             if (accessToken) {
+              statusEl.innerText = 'Token found, setting session...';
               fetch('/auth/set-session', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -150,19 +157,28 @@ export const getOAuthCallback = async (req: Request, res: Response) => {
               .then(res => res.json())
               .then(data => {
                 if (data.success) {
+                  statusEl.innerText = 'Success! Redirecting...';
                   window.location.href = data.redirect || '/dashboard';
                 } else {
-                  window.location.href = '/login?error=oauth_failed';
+                  statusEl.innerText = 'Session failed: ' + data.error;
+                  setTimeout(() => {
+                    window.location.href = '/login?error=oauth_failed_server_' + encodeURIComponent(data.error);
+                  }, 3000);
                 }
               })
-              .catch(() => {
-                window.location.href = '/login?error=oauth_failed';
+              .catch(err => {
+                statusEl.innerText = 'Fetch error: ' + err.message;
+                setTimeout(() => {
+                  window.location.href = '/login?error=oauth_failed_fetch';
+                }, 3000);
               });
             } else {
-              window.location.href = '/login?error=missing_oauth_code';
+              statusEl.innerText = 'No access token in hash.';
+              setTimeout(() => { window.location.href = '/login?error=missing_oauth_code_in_hash'; }, 2000);
             }
           } else {
-            window.location.href = '/login?error=missing_oauth_code';
+            statusEl.innerText = 'No valid hash found. Url: ' + window.location.href;
+            setTimeout(() => { window.location.href = '/login?error=missing_oauth_code_no_hash'; }, 2000);
           }
         </script>
       </body>
