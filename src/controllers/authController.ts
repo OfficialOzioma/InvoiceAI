@@ -23,16 +23,17 @@ export const getVerifyOtp = (req: Request, res: Response) => {
 
 export const postSignup = async (req: Request, res: Response) => {
   try {
-    const { businessName, email, password, provider } = req.body;
+    const { fullName, email, password, provider } = req.body;
     
     if (provider === 'google') {
-      const { url } = await AuthService.getGoogleOAuthUrl();
+      const host = req.get('host') || 'localhost:3000';
+      const { url } = await AuthService.getGoogleOAuthUrl(host);
       if (url) return res.redirect(url);
       return res.redirect('/signup?error=oauth_failed');
     }
 
     // Email path: sign up, sends OTP automatically if email confirmations are on
-    await AuthService.signup(email, password, businessName);
+    await AuthService.signup(email, password, fullName);
     
     // Redirect to verify OTP page, passing the email via query string
     res.redirect(`/verify-otp?email=${encodeURIComponent(email)}`);
@@ -88,12 +89,18 @@ export const postLogin = async (req: Request, res: Response) => {
 
 export const getOAuthCallback = async (req: Request, res: Response) => {
   try {
-    const { code } = req.query;
+    const { code, error, error_description } = req.query;
+    
+    if (error) {
+       console.error('Supabase OAuth Error parameters:', error, error_description);
+       return res.redirect('/login?error=' + encodeURIComponent(error_description as string || 'OAuth failed from provider'));
+    }
+
     if (code) {
-      const { data, error } = await AuthService.exchangeCodeForSession(code as string);
-      if (error) throw error;
+      const { data, error: sessionError } = await AuthService.exchangeCodeForSession(code as string);
+      if (sessionError) throw sessionError;
       
-      if (data.session) {
+      if (data?.session) {
         res.cookie('sb-access-token', data.session.access_token, { httpOnly: true, secure: true, sameSite: 'none' });
         res.cookie('sb-refresh-token', data.session.refresh_token, { httpOnly: true, secure: true, sameSite: 'none' });
         
@@ -118,10 +125,13 @@ export const getOAuthCallback = async (req: Request, res: Response) => {
       
       return res.redirect('/dashboard');
     }
-    res.redirect('/login');
+    
+    // If no code and no error was passed, we reached the callback mysteriously
+    console.error('Callback reached without an OAuth code.');
+    res.redirect('/login?error=missing_oauth_code');
   } catch (error: any) {
-    console.error('OAuth Callback error:', error);
-    res.redirect('/login?error=oauth_failed');
+    console.error('OAuth Callback server error:', error);
+    res.redirect('/login?error=' + encodeURIComponent(error?.message || 'oauth_failed'));
   }
 };
 

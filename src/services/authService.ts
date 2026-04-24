@@ -3,14 +3,14 @@ import { UserModel } from '../models/User.js';
 import { OrganizationModel } from '../models/Organization.js';
 
 export class AuthService {
-  static async signup(email: string, password?: string, businessName?: string) {
-    // We pass businessName in data so we can retrieve it when verifying OTP
+  static async signup(email: string, password?: string, fullName?: string) {
+    // We pass fullName in metadata so we can retrieve it when creating the PRISMA user
     const { data, error } = await supabase.auth.signUp({
       email,
       password: password || 'Password123!', // Simple fallback if not provided
       options: {
         data: {
-          businessName: businessName || ''
+          full_name: fullName || ''
         }
       }
     });
@@ -32,12 +32,9 @@ export class AuthService {
     if (user) {
       // Create user entry in Prisma
       await UserModel.upsert(user.id, user.email || email, user.user_metadata?.full_name);
-
-      // Create organization if they provided a business name during signup
-      const businessName = user.user_metadata?.businessName;
-      if (businessName) {
-        await OrganizationModel.create(user.id, { name: businessName, email: user.email });
-      }
+      
+      // We skip Organization creation here now.
+      // Organizations will be strictly created during the Onboarding Flow later!
     }
 
     return data;
@@ -65,11 +62,16 @@ export class AuthService {
     return await supabase.auth.exchangeCodeForSession(code);
   }
 
-  static async getGoogleOAuthUrl() {
+  static async getGoogleOAuthUrl(host: string) {
+    // Dynamically detect if we are on Cloud Run or Localhost
+    const isCloudRun = host.includes('run.app');
+    const protocol = isCloudRun ? 'https' : 'http';
+    const redirectUri = `${protocol}://${host}/auth/callback`;
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/auth/callback` : 'http://localhost:3000/auth/callback'
+        redirectTo: redirectUri
       }
     });
     if (error) throw error;
