@@ -24,21 +24,28 @@ export class AuthService {
     
     let result;
     if (isTokenHash) {
-      result = await supabase.auth.verifyOtp({ token_hash: token, type: 'email' });
+      result = await supabase.auth.verifyOtp({ token_hash: token, type: 'signup' });
+      if (result.error && result.error.message.includes('Token has expired or is invalid')) {
+         // Fallback to 'email' if signup type fails
+         result = await supabase.auth.verifyOtp({ token_hash: token, type: 'email' });
+      }
     } else {
       result = await supabase.auth.verifyOtp({ email, token, type: 'signup' });
     }
 
     const { data, error } = result;
     if (error) throw error;
+    if (!data) throw new Error('Invalid OTP data');
 
-    const user = data?.user;
+    const user = data.user;
     if (user) {
       // Create user entry in Prisma
       await UserModel.upsert(user.id, user.email || email, user.user_metadata?.full_name);
       
       // We skip Organization creation here now.
       // Organizations will be strictly created during the Onboarding Flow later!
+    } else {
+      throw new Error('User not found after OTP verification.');
     }
 
     return data;
@@ -80,5 +87,9 @@ export class AuthService {
     });
     if (error) throw error;
     return data;
+  }
+
+  static async getUserByToken(token: string) {
+    return await supabase.auth.getUser(token);
   }
 }

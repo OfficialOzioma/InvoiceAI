@@ -5,7 +5,8 @@ export const checkAuth = async (req: Request, res: Response, next: NextFunction)
   const token = req.cookies && req.cookies['sb-access-token'];
   
   if (token) {
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const { data, error } = await supabase.auth.getUser(token);
+    const user = data?.user;
     
     if (user && !error) {
       (req as any).user = {
