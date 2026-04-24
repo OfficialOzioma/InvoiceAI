@@ -88,90 +88,8 @@ export const postLogin = async (req: Request, res: Response) => {
 };
 
 export const getOAuthCallback = async (req: Request, res: Response) => {
-  try {
-    const { code, error, error_description } = req.query;
-    
-    if (error) {
-       console.error('Supabase OAuth Error parameters:', error, error_description);
-       return res.redirect('/login?error=' + encodeURIComponent(error_description as string || 'OAuth failed from provider'));
-    }
-
-    if (code) {
-      const { data, error: sessionError } = await AuthService.exchangeCodeForSession(code as string);
-      if (sessionError) throw sessionError;
-      
-      if (data?.session) {
-        res.cookie('sb-access-token', data.session.access_token, { httpOnly: true, secure: true, sameSite: 'none' });
-        res.cookie('sb-refresh-token', data.session.refresh_token, { httpOnly: true, secure: true, sameSite: 'none' });
-        
-        const supabaseUser = data.user;
-        // DB removed for now, redirect to dashboard by default
-        return res.redirect('/dashboard');
-      }
-      
-      return res.redirect('/dashboard');
-    }
-    
-    // If no code and no error was passed, we reached the callback mysteriously
-    // But since Supabase 'implicit flow' uses a URL hash (e.g. #access_token=...), 
-    // it never reaches the Express server query params. 
-    // We send an HTML page that extracts the hash and posts it back to our server.
-    return res.send(`
-      <!DOCTYPE html>
-      <html>
-      <head><title>Authenticating...</title></head>
-      <body>
-        <p id="status">Processing authentication...</p>
-        <script>
-          const hash = window.location.hash;
-          const statusEl = document.getElementById('status');
-          
-          if (hash && hash.includes('access_token')) {
-            const params = new URLSearchParams(hash.substring(1));
-            const accessToken = params.get('access_token');
-            const refreshToken = params.get('refresh_token');
-            
-            if (accessToken) {
-              statusEl.innerText = 'Token found, setting session...';
-              fetch('/auth/set-session', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ access_token: accessToken, refresh_token: refreshToken })
-              })
-              .then(res => res.json())
-              .then(data => {
-                if (data.success) {
-                  statusEl.innerText = 'Success! Redirecting...';
-                  window.location.href = data.redirect || '/dashboard';
-                } else {
-                  statusEl.innerText = 'Session failed: ' + data.error;
-                  setTimeout(() => {
-                    window.location.href = '/login?error=oauth_failed_server_' + encodeURIComponent(data.error);
-                  }, 3000);
-                }
-              })
-              .catch(err => {
-                statusEl.innerText = 'Fetch error: ' + err.message;
-                setTimeout(() => {
-                  window.location.href = '/login?error=oauth_failed_fetch';
-                }, 3000);
-              });
-            } else {
-              statusEl.innerText = 'No access token in hash.';
-              setTimeout(() => { window.location.href = '/login?error=missing_oauth_code_in_hash'; }, 2000);
-            }
-          } else {
-            statusEl.innerText = 'No valid hash found. Url: ' + window.location.href;
-            setTimeout(() => { window.location.href = '/login?error=missing_oauth_code_no_hash'; }, 2000);
-          }
-        </script>
-      </body>
-      </html>
-    `);
-  } catch (error: any) {
-    console.error('OAuth Callback server error:', error);
-    res.redirect('/login?error=' + encodeURIComponent(error?.message || 'oauth_failed'));
-  }
+  // DB removed for now, redirect to dashboard by default
+  return res.redirect('/dashboard');
 };
 
 export const logout = (req: Request, res: Response) => {
@@ -187,19 +105,8 @@ export const postOAuthSession = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: 'Missing tokens' });
     }
 
-    // Verify token with Supabase
-    const { data: { user }, error } = await AuthService.getUserByToken(access_token);
-    if (error || !user) {
-      return res.status(401).json({ success: false, error: 'Invalid token' });
-    }
-
-    // Set cookies
-    res.cookie('sb-access-token', access_token, { httpOnly: true, secure: true, sameSite: 'none' });
-    res.cookie('sb-refresh-token', refresh_token, { httpOnly: true, secure: true, sameSite: 'none' });
-
     // Handle existing vs new user (DB removed for now)
     let redirectUrl = '/dashboard';
-    // Assume redirect to dashboard for now
     res.json({ success: true, redirect: redirectUrl });
   } catch (error: any) {
     console.error('OAuth session error:', error);
