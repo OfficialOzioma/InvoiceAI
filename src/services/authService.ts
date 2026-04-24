@@ -21,36 +21,37 @@ export class AuthService {
 
   static async verifyOtp(email: string, token: string) {
     const isTokenHash = token.length > 6;
-    
+
     let result;
     if (isTokenHash) {
       result = await supabase.auth.verifyOtp({ token_hash: token, type: 'signup' });
       if (result.error && result.error.message.includes('Token has expired or is invalid')) {
-         console.log("Fallback to email type for token_hash");
-         result = await supabase.auth.verifyOtp({ token_hash: token, type: 'email' });
+        console.log("Fallback to email type for token_hash");
+        result = await supabase.auth.verifyOtp({ token_hash: token, type: 'email' });
       }
     } else {
       result = await supabase.auth.verifyOtp({ email, token, type: 'signup' });
       if (result.error && result.error.message.includes('Token has expired or is invalid')) {
-         console.log("Fallback to email type for 6-digit PIN");
-         result = await supabase.auth.verifyOtp({ email, token, type: 'email' });
+        console.log("Fallback to email type for 6-digit PIN");
+        result = await supabase.auth.verifyOtp({ email, token, type: 'email' });
       }
     }
 
-    console.log("verifyOtp result:", JSON.stringify(result, null, 2));
+    // console.log("verifyOtp result:", JSON.stringify(result, null, 2));
 
     let { data, error } = result;
     if (error) {
-       console.error("Supabase OTP Error:", error.message);
-       throw new Error('Supabase OTP Error: ' + error.message);
+      console.error("Supabase OTP Error:", error.message);
+      throw new Error('Supabase OTP Error: ' + error.message);
     }
     if (!data) throw new Error('Invalid OTP data (data is null)');
 
     let user = data.user;
+
     if (user) {
       // Create user entry in Prisma
       await UserModel.upsert(user.id, user.email || email, user.user_metadata?.full_name);
-      
+      console.log("User created in Prisma:", JSON.stringify(user, null, 2));
       // We skip Organization creation here now.
       // Organizations will be strictly created during the Onboarding Flow later!
     } else {
