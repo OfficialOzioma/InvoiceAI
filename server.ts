@@ -30,8 +30,8 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'invoice-ai-secret',
   resave: false,
   saveUninitialized: true,
-  cookie: { 
-    secure: true, 
+  cookie: {
+    secure: true,
     sameSite: 'none',
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
@@ -39,8 +39,8 @@ app.use(session({
 app.use(checkAuth);
 
 app.use((req, res, next) => {
-    res.locals.currentPath = req.path;
-    next();
+  res.locals.currentPath = req.path;
+  next();
 });
 
 app.use(express.static(path.join(__dirname, "public")));
@@ -56,4 +56,5 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  console.log("My GEMINI_API_KEY is: ", process.env.GEMINI_API_KEY);
 });

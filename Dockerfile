@@ -1,5 +1,7 @@
 FROM node:20-alpine
 
+ENV NODE_ENV=production
+
 WORKDIR /app
 
 # Install dependencies (including dev dependencies so we can run TypeScript via tsx)
