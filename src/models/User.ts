@@ -1,33 +1,18 @@
-import prisma from '../lib/prisma.js';
+import { sutando, Model } from 'sutando';
+import { Organization } from './Organization.js';
 
-export class UserModel {
-  static async getById(id: string) {
-    return await prisma.user.findUnique({
-      where: { id },
-      include: {
-        memberships: {
-          include: {
-            organization: true
-          }
-        }
-      }
-    });
-  }
+export class User extends Model {
+  incrementing = false;
+  keyType = 'string';
+  table = 'users';
 
-  // Ensures a user exists in our DB, linked to a Supabase Auth UID
-  static async upsert(id: string, email: string, name?: string) {
-    console.log(`Upserting user in Prisma with id: ${id}, email: ${email}, name: ${name}`);
-    return await prisma.user.upsert({
-      where: { id },
-      update: {
-        email,
-        name: name || undefined
-      },
-      create: {
-        id,
-        email,
-        name
-      }
-    });
+  // Define relationships if needed
+  organizations() {
+    return this.belongsToMany(
+      Organization,
+      'organization_users',
+      'user_id',
+      'organization_id'
+    ).withPivot(['role']);
   }
 }

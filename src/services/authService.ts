@@ -6,12 +6,15 @@ export class AuthService {
 
   static async verifyOtp(email: string, token: string) {
     console.log('Mock verifyOtp', email, token);
-    return { user: { id: 'mock-user-id', email } };
+    return { 
+      user: { id: 'mock-user-id', email },
+      session: { access_token: 'mock_access_token', refresh_token: 'mock_refresh_token' }
+    };
   }
 
   static async login(email: string, password: string) {
     console.log('Mock login', email);
-    return {
+    return { 
       user: { id: 'mock-user-id', email },
       session: { access_token: 'mock_access_token', refresh_token: 'mock_refresh_token' }
     };
