@@ -2,36 +2,60 @@
     showModal: false,
     editingClient: null,
     searchQuery: '',
-    clients: [
-        { id: 1, name: 'Acme Corp', email: 'billing@acme.com', phone: '+1 555-0123', address: '123 Business Way, NY', totalInvoiced: '$12,400', status: 'Active' },
-        { id: 2, name: 'Globex Corp', email: 'finance@globex.com', phone: '+1 555-4567', address: '456 Innovation Blvd, SF', totalInvoiced: '$8,250', status: 'Active' },
-        { id: 3, name: 'Initech', email: 'accounts@initech.com', phone: '+1 555-9876', address: '789 Corporate Park, TX', totalInvoiced: '$3,100', status: 'Inactive' }
-    ],
+    clients: <%= JSON.stringify(initialClients) %>,
     form: { name: '', email: '', phone: '', address: '' },
     
     initForm() {
         this.form = this.editingClient ? { ...this.editingClient } : { name: '', email: '', phone: '', address: '' };
     },
     
-    saveClient() {
-        if (this.editingClient) {
-            const index = this.clients.findIndex(c => c.id === this.editingClient.id);
-            this.clients[index] = { ...this.form, id: this.editingClient.id, totalInvoiced: this.editingClient.totalInvoiced, status: 'Active' };
-        } else {
-            this.clients.push({
-                ...this.form,
-                id: Date.now(),
-                totalInvoiced: '$0',
-                status: 'Active'
-            });
+    async saveClient() {
+        try {
+            if (this.editingClient) {
+                const res = await fetch(`/clients/${this.editingClient.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.form)
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    const index = this.clients.findIndex(c => c.id === this.editingClient.id);
+                    this.clients[index] = { ...this.form, id: this.editingClient.id, totalInvoiced: this.editingClient.totalInvoiced, status: 'Active' };
+                }
+            } else {
+                const res = await fetch('/clients', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.form)
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    this.clients.push({
+                        ...this.form,
+                        id: data.client.id,
+                        totalInvoiced: '$0',
+                        status: 'Active'
+                    });
+                }
+            }
+            this.showModal = false;
+            this.editingClient = null;
+        } catch (err) {
+            console.error('Failed to save client', err);
+            alert('Error saving client');
         }
-        this.showModal = false;
-        this.editingClient = null;
     },
     
-    deleteClient(id) {
+    async deleteClient(id) {
         if (confirm('Are you sure you want to delete this client?')) {
-            this.clients = this.clients.filter(c => c.id !== id);
+            try {
+                const res = await fetch(`/clients/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    this.clients = this.clients.filter(c => c.id !== id);
+                }
+            } catch (err) {
+                console.error('Failed to delete client', err);
+            }
         }
     },
     

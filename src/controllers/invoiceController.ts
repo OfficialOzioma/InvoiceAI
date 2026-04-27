@@ -1,62 +1,41 @@
 import { Request, Response } from 'express';
 import { generateInvoiceDraft, generateInsights } from '../services/geminiService.js';
-
-export let INVOICES_DB = [
-  { 
-    id: 'INV-001', invoiceNumber: 'INV-2026-001', clientName: 'Globex Corp', email: 'billing@globex.com', 
-    total: '1,450.00', subtotal: '1,350.00', tax: '100.00', status: 'Paid', 
-    createdAt: new Date('2026-04-10'), dueDate: new Date('2026-04-24'),
-    notes: 'Thank you for your business.', terms: 'Net 14',
-    lineItems: [
-        { description: 'Consulting Services', quantity: 10, price: '100.00', amount: '1,000.00' },
-        { description: 'Server Setup', quantity: 1, price: '350.00', amount: '350.00' }
-    ]
-  },
-  { 
-    id: 'INV-002', invoiceNumber: 'INV-2026-002', clientName: 'Initech', email: 'accounts@initech.com', 
-    total: '3,200.00', subtotal: '3,200.00', tax: '0.00', status: 'Pending', 
-    createdAt: new Date('2026-04-15'), dueDate: new Date('2026-05-15'),
-    notes: 'Please remit payment within 30 days.', terms: 'Net 30',
-    lineItems: [
-        { description: 'Web Application Development', quantity: 1, price: '3,200.00', amount: '3,200.00' }
-    ]
-  },
-  { 
-    id: 'INV-003', invoiceNumber: 'INV-2026-003', clientName: 'Umbrella Corp', email: 'finance@umbrellacorp.com', 
-    total: '850.00', subtotal: '800.00', tax: '50.00', status: 'Overdue', 
-    createdAt: new Date('2026-03-01'), dueDate: new Date('2026-03-15'),
-    notes: 'Late fee of 5% applies after due date.', terms: 'Net 14',
-    lineItems: [
-        { description: 'Security Audit', quantity: 1, price: '800.00', amount: '800.00' }
-    ]
-  },
-  { 
-    id: 'INV-004', invoiceNumber: 'INV-2026-004', clientName: 'Stark Industries', email: 'stark@starkindustries.com', 
-    total: '12,500.00', subtotal: '12,500.00', tax: '0.00', status: 'Paid', 
-    createdAt: new Date('2026-04-05'), dueDate: new Date('2026-05-05'),
-    notes: 'Project Titan Phase 1.', terms: 'Net 30',
-    lineItems: [
-        { description: 'Arc Reactor Implementation', quantity: 1, price: '12,500.00', amount: '12,500.00' }
-    ]
-  },
-  { 
-    id: 'INV-005', invoiceNumber: 'INV-2026-005', clientName: 'Wayne Enterprises', email: 'ap@wayne.com', 
-    total: '4,500.00', subtotal: '4,000.00', tax: '500.00', status: 'Draft', 
-    createdAt: new Date('2026-04-18'), dueDate: new Date('2026-05-18'),
-    notes: 'R&D Consultation.', terms: 'Net 30',
-    lineItems: [
-        { description: 'Tactical Gear Design', quantity: 20, price: '200.00', amount: '4,000.00' }
-    ]
-  }
-];
+import { InvoiceService } from '../services/invoiceService.js';
+import { OrganizationService } from '../services/organizationService.js';
+import { ClientService } from '../services/clientService.js';
 
 export const getInvoices = async (req: Request, res: Response) => {
   const user = (req as any).user;
   if (!user) return res.redirect('/login');
 
   try {
-    let invoices = INVOICES_DB;
-    let organization = null;
+    const orgs = await OrganizationService.getOrganizationsForUser(user.id);
+    const organization = orgs[0]; // For now, use the first one
+    
+    if (!organization) {
+      return res.redirect('/onboarding');
+    }
+
+    const orgId = organization.getAttribute('id');
+    const rawInvoices = await InvoiceService.getInvoicesByOrganization(orgId);
+    
+    // Map to camelCase for the frontend template
+    const invoices = rawInvoices.map(inv => {
+      const client = inv.getAttribute('client');
+      return {
+        id: inv.getAttribute('id'),
+        invoiceNumber: inv.getAttribute('invoice_number'),
+        clientName: client ? client.getAttribute('name') : 'No Client',
+        email: client ? client.getAttribute('email') : '',
+        total: inv.getAttribute('total'),
+        subtotal: inv.getAttribute('subtotal'),
+        tax: inv.getAttribute('tax'),
+        status: inv.getAttribute('status'),
+        createdAt: inv.getAttribute('created_at'),
+        dueDate: inv.getAttribute('due_date'),
+        lineItems: [] // Will add line items later
+      };
+    });
     
     // Group invoices for Kanban View Server-Side
     const kanban = {
@@ -73,35 +52,83 @@ export const getInvoices = async (req: Request, res: Response) => {
   }
 };
 
-export const getInvoiceDetail = (req: Request, res: Response) => {
-  const invoice = INVOICES_DB.find(i => i.id === req.params.id);
-  if (!invoice) return res.status(404).send('Not Found');
+export const getInvoiceDetail = async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  const orgs = await OrganizationService.getOrganizationsForUser(user.id);
+  const organization = orgs[0];
+
+  if (!organization) return res.redirect('/onboarding');
+
+  const invoiceModel = await InvoiceService.getInvoiceById(organization.getAttribute('id'), req.params.id);
+  if (!invoiceModel) return res.status(404).send('Not Found');
+
+  const client = invoiceModel.getAttribute('client');
+  const invoice = {
+    id: invoiceModel.getAttribute('id'),
+    invoiceNumber: invoiceModel.getAttribute('invoice_number'),
+    clientName: client ? client.getAttribute('name') : 'No Client',
+    email: client ? client.getAttribute('email') : '',
+    total: invoiceModel.getAttribute('total'),
+    subtotal: invoiceModel.getAttribute('subtotal'),
+    tax: invoiceModel.getAttribute('tax'),
+    status: invoiceModel.getAttribute('status'),
+    createdAt: invoiceModel.getAttribute('created_at'),
+    dueDate: invoiceModel.getAttribute('due_date'),
+    lineItems: []
+  };
+
   res.render('pages/invoice-detail', { title: `Invoice ${invoice.invoiceNumber}`, layout: 'dashboard-layout', invoice });
 };
 
-export const updateInvoiceStatus = (req: Request, res: Response) => {
+export const updateInvoiceStatus = async (req: Request, res: Response) => {
+  const user = (req as any).user;
   const { id } = req.params;
   const { status } = req.body;
   
-  const idx = INVOICES_DB.findIndex(i => i.id === id);
-  if (idx !== -1) {
-    INVOICES_DB[idx].status = status;
-    res.json({ success: true, invoice: INVOICES_DB[idx] });
-  } else {
-    res.status(404).json({ error: 'Not found' });
+  try {
+    const orgs = await OrganizationService.getOrganizationsForUser(user.id);
+    const organization = orgs[0];
+    if (!organization) return res.status(403).json({ error: 'No organization' });
+
+    const invoice = await InvoiceService.updateInvoiceStatus(organization.getAttribute('id'), id, status);
+    res.json({ success: true, invoice });
+  } catch (err: any) {
+    res.status(404).json({ error: err.message });
   }
 };
 
-export const deleteInvoice = (req: Request, res: Response) => {
+export const deleteInvoice = async (req: Request, res: Response) => {
+  const user = (req as any).user;
   const { id } = req.params;
-  INVOICES_DB = INVOICES_DB.filter(i => i.id !== id);
-  res.json({ success: true });
+  
+  try {
+    const orgs = await OrganizationService.getOrganizationsForUser(user.id);
+    const organization = orgs[0];
+    if (!organization) return res.status(403).json({ error: 'No organization' });
+
+    await InvoiceService.deleteInvoice(organization.getAttribute('id'), id);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(404).json({ error: err.message });
+  }
 };
 
-export const getBuilder = (req: Request, res: Response) => {
-  // Creating a new invoice, send a null invoice object to signal it's "new"
+export const getBuilder = async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  const orgs = await OrganizationService.getOrganizationsForUser(user.id);
+  const organization = orgs[0];
+  if (!organization) return res.redirect('/onboarding');
+
+  const clients = await ClientService.getClientsByOrganization(organization.getAttribute('id'));
+
   const templateId = req.query.template as string || 'minimal.html';
-  res.render('pages/invoiceBuilder', { title: 'Builder | InvoiceAI', layout: 'dashboard-layout', editInvoice: null, templateId });
+  res.render('pages/invoiceBuilder', { 
+    title: 'Builder | InvoiceAI', 
+    layout: 'dashboard-layout', 
+    editInvoice: null, 
+    templateId,
+    clients: clients.map(c => ({ id: c.getAttribute('id'), name: c.getAttribute('name') }))
+  });
 };
 
 export const getAiAssistant = (req: Request, res: Response) => {
@@ -120,16 +147,58 @@ export const getAiAssistant = (req: Request, res: Response) => {
   });
 };
 
-export const getEditBuilder = (req: Request, res: Response) => {
-  const invoice = INVOICES_DB.find(i => i.id === req.params.id);
+export const getEditBuilder = async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  const orgs = await OrganizationService.getOrganizationsForUser(user.id);
+  const organization = orgs[0];
+  if (!organization) return res.redirect('/onboarding');
+
+  const invoice = await InvoiceService.getInvoiceById(organization.getAttribute('id'), req.params.id);
   if (!invoice) return res.status(404).send('Not Found');
   res.render('pages/invoiceBuilder', { title: 'Edit Invoice | InvoiceAI', layout: 'dashboard-layout', editInvoice: invoice });
 };
 
-export const getPublicInvoice = (req: Request, res: Response) => {
-  const invoice = INVOICES_DB.find(i => i.id === req.params.id);
+export const getPublicInvoice = async (req: Request, res: Response) => {
+  // Public invoice doesn't need auth, but we should find it by ID globally
+  // We'll use a direct query for public view
+  const { id } = req.params;
+  const { Invoice } = await import('../models/Invoice.js');
+  const invoice = await Invoice.query().where('id', id).first();
+  
   if (!invoice) return res.status(404).send('Not Found');
-  res.render('pages/public-invoice', { title: `Invoice ${invoice.invoiceNumber}`, layout: false, invoice });
+  res.render('pages/public-invoice', { title: `Invoice ${invoice.getAttribute('invoice_number')}`, layout: false, invoice });
+};
+
+export const createInvoice = async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  const { invoiceNumber, clientId, issueDate, dueDate, items, notes } = req.body;
+  
+  try {
+    const orgs = await OrganizationService.getOrganizationsForUser(user.id);
+    const organization = orgs[0];
+    if (!organization) return res.status(403).json({ error: 'No organization' });
+
+    // Calculate totals
+    const subtotal = items.reduce((sum: number, item: any) => sum + (Number(item.quantity) * Number(item.price)), 0);
+    const tax = subtotal * 0.1;
+    const total = subtotal + tax;
+
+    const invoice = await InvoiceService.createInvoice(organization.getAttribute('id'), {
+      invoice_number: invoiceNumber,
+      client_id: clientId,
+      subtotal,
+      tax,
+      total,
+      due_date: dueDate,
+      status: 'Pending',
+      items: items // InvoiceService now handles this
+    });
+
+    res.json({ success: true, invoice });
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 };
 
 export const createAiDraft = async (req: Request, res: Response) => {
@@ -148,7 +217,13 @@ export const createAiDraft = async (req: Request, res: Response) => {
 
 export const getAiInsights = async (req: Request, res: Response) => {
     try {
-        const insights = await generateInsights(INVOICES_DB);
+        const user = (req as any).user;
+        const orgs = await OrganizationService.getOrganizationsForUser(user.id);
+        const organization = orgs[0];
+        if (!organization) return res.status(403).json({ error: 'No organization' });
+
+        const invoices = await InvoiceService.getInvoicesByOrganization(organization.getAttribute('id'));
+        const insights = await generateInsights((invoices as any).all().map((i: any) => i.toJSON()));
         res.json(insights);
     } catch (error: any) {
         console.error("Controller Insights Error:", error);

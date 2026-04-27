@@ -77,7 +77,11 @@
                  <select id="clientId" class="flex-1 bg-slate-50 border border-border rounded-lg px-4 py-3 text-sm outline-none focus:bg-white focus:border-primary transition-all">
                     <option value="">Select a Client</option>
                     <option value="new">-- Create New Client --</option>
-                    <option value="1">Acme Corp</option>
+                    <% if (locals.clients) { %>
+                      <% clients.forEach(client => { %>
+                        <option value="<%= client.id %>"><%= client.name %></option>
+                      <% }); %>
+                    <% } %>
                  </select>
                </div>
             </div>

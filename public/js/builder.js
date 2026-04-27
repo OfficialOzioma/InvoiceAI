@@ -128,10 +128,18 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            // Placeholder: we'd post this to the backend
-            // const res = await fetch('/invoices', { method: 'POST', body: JSON.stringify(invoiceData), headers: {'Content-Type': 'application/json'} });
-            alert('Invoice Created Successfully!');
-            window.location.href = '/invoices';
+            const res = await fetch('/invoices', { 
+                method: 'POST', 
+                body: JSON.stringify(invoiceData), 
+                headers: {'Content-Type': 'application/json'} 
+            });
+            if (res.ok) {
+                alert('Invoice Created Successfully!');
+                window.location.href = '/invoices';
+            } else {
+                const err = await res.json();
+                alert(`Error: ${err.error || 'Failed to save'}`);
+            }
         } catch (e) {
             console.error("Save error", e);
             alert("Error saving invoice.");

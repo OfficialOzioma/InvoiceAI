@@ -1,26 +1,6 @@
 import { Request, Response } from 'express';
-
-const MOCK_INVOICES = [
-  { id: 'INV-001', invoiceNumber: 'INV-2026-001', clientName: 'Globex Corp', total: '1,450.00', status: 'Paid', createdAt: new Date() },
-  { id: 'INV-002', invoiceNumber: 'INV-2026-002', clientName: 'Initech', total: '3,200.00', status: 'Pending', createdAt: new Date() },
-  { id: 'INV-003', invoiceNumber: 'INV-2026-003', clientName: 'Umbrella Corp', total: '850.00', status: 'Overdue', createdAt: new Date() },
-  { id: 'INV-004', invoiceNumber: 'INV-2026-004', clientName: 'Stark Industries', total: '12,500.00', status: 'Paid', createdAt: new Date() }
-];
-
-const MOCK_STATS = {
-  totalRevenue: '45,231.00',
-  revenueTrend: '+12.5%',
-  revenueIsUp: true,
-  outstanding: '4,050.00',
-  outstandingTrend: '-2.4%',
-  outstandingIsUp: false,
-  paidInvoices: 124,
-  paidTrend: '+8.1%',
-  paidIsUp: true,
-  overdueInvoices: 3,
-  overdueTrend: '+1',
-  overdueIsUp: true // technically bad, but means increase
-};
+import { InvoiceService } from '../services/invoiceService.js';
+import { OrganizationService } from '../services/organizationService.js';
 
 export const getDashboard = async (req: Request, res: Response) => {
   const user = (req as any).user;
@@ -30,11 +10,56 @@ export const getDashboard = async (req: Request, res: Response) => {
   }
 
   try {
-    const activeWorkspaceId = 'mock-workspace-id';
-    let invoices = MOCK_INVOICES;
-    let stats = MOCK_STATS;
+    const orgs = await OrganizationService.getOrganizationsForUser(user.id);
+    const organization = orgs[0];
+    
+    if (!organization) {
+      return res.redirect('/onboarding');
+    }
 
-    const isDatabaseReady = false;
+    const orgId = organization.getAttribute('id');
+    const rawInvoices = await InvoiceService.getInvoicesByOrganization(orgId);
+
+    // Map for frontend
+    const invoices = rawInvoices.slice(0, 5).map(inv => {
+      const client = inv.getAttribute('client');
+      return {
+        id: inv.getAttribute('id'),
+        invoiceNumber: inv.getAttribute('invoice_number'),
+        clientName: client ? client.getAttribute('name') : 'No Client',
+        total: inv.getAttribute('total'),
+        status: inv.getAttribute('status'),
+        createdAt: inv.getAttribute('created_at')
+      };
+    });
+
+    // Calculate real stats
+    const invoicesArray = rawInvoices.all();
+    const totalRevenue = invoicesArray
+      .filter(i => i.getAttribute('status') === 'Paid')
+      .reduce((sum, i) => sum + parseFloat(i.getAttribute('total')), 0);
+
+    const outstanding = invoicesArray
+      .filter(i => i.getAttribute('status') === 'Pending')
+      .reduce((sum, i) => sum + parseFloat(i.getAttribute('total')), 0);
+
+    const paidCount = invoicesArray.filter(i => i.getAttribute('status') === 'Paid').length;
+    const overdueCount = invoicesArray.filter(i => i.getAttribute('status') === 'Overdue').length;
+
+    const stats = {
+      totalRevenue: totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 }),
+      revenueTrend: '+0%',
+      revenueIsUp: true,
+      outstanding: outstanding.toLocaleString('en-US', { minimumFractionDigits: 2 }),
+      outstandingTrend: '0%',
+      outstandingIsUp: false,
+      paidInvoices: paidCount,
+      paidTrend: '0%',
+      paidIsUp: true,
+      overdueInvoices: overdueCount,
+      overdueTrend: '0%',
+      overdueIsUp: overdueCount > 0
+    };
 
     res.render('pages/dashboard', {
       title: 'Dashboard | InvoiceAI',
@@ -42,7 +67,7 @@ export const getDashboard = async (req: Request, res: Response) => {
       user,
       invoices,
       stats,
-      activeWorkspace: activeWorkspaceId
+      activeWorkspace: orgId
     });
   } catch (error) {
     console.error(error);
