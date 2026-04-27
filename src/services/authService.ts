@@ -5,7 +5,6 @@ import { OrganizationUser } from '../models/OrganizationUser.js';
 
 export class AuthService {
   static async signup(email: string, password?: string, fullName?: string) {
-    // Check if user exists
     const existingUser = await User.query().where('email', email).first();
     if (existingUser) {
       throw new Error('User already exists');
@@ -13,12 +12,20 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password || 'Password123!', 10);
     
-    // Create User
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
     const user = new User();
     user.setAttribute('email', email);
     user.setAttribute('password', hashedPassword);
     user.setAttribute('full_name', fullName || '');
+    user.setAttribute('auth_provider', 'manual');
+    user.setAttribute('otp_code', otp);
+    user.setAttribute('otp_expires_at', expiresAt);
+    user.setAttribute('is_verified', false);
     await user.save();
+
+    console.log(`\x1b[32m[AUTH] OTP for ${email}: ${otp}\x1b[0m`);
 
     return { 
       user: { 
@@ -30,9 +37,18 @@ export class AuthService {
   }
 
   static async verifyOtp(email: string, token: string) {
-    // For now, auto-verify for development
-    const user = await User.query().where('email', email).first();
-    if (!user) throw new Error('User not found');
+    const user = await User.query()
+      .where('email', email)
+      .where('otp_code', token)
+      .where('otp_expires_at', '>', new Date())
+      .first();
+
+    if (!user) throw new Error('Invalid or expired OTP');
+
+    user.setAttribute('is_verified', true);
+    user.setAttribute('otp_code', null);
+    user.setAttribute('otp_expires_at', null);
+    await user.save();
 
     return { 
       user: { id: user.getAttribute('id'), email: user.getAttribute('email') },
@@ -44,8 +60,16 @@ export class AuthService {
     const user = await User.query().where('email', email).first();
     if (!user) throw new Error('Invalid credentials');
 
+    if (user.getAttribute('auth_provider') === 'google') {
+      throw new Error('This account is linked with Google. Please login with Google.');
+    }
+
     const isValid = await bcrypt.compare(password, user.getAttribute('password'));
     if (!isValid) throw new Error('Invalid credentials');
+
+    if (!user.getAttribute('is_verified')) {
+      throw new Error('Account not verified. Please check your console for the OTP.');
+    }
 
     return { 
       user: { 

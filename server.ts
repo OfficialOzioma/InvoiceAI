@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import expressLayouts from "express-ejs-layouts";
 import cookieParser from "cookie-parser";
 import session from "express-session";
+import passport from "./src/lib/passport.js";
 import dotenv from "dotenv";
 import "./src/database/index.js"; // Initialize Sutando ORM
 import routes from "./src/routes/index.js";
@@ -32,11 +33,15 @@ app.use(session({
   resave: false,
   saveUninitialized: true,
   cookie: { 
-    secure: true, 
-    sameSite: 'none',
+    secure: process.env.NODE_ENV === 'production', 
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 }));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use(checkAuth);
 
 app.use((req, res, next) => {
