@@ -2,6 +2,19 @@ import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/authService.js';
 
 export const checkAuth = async (req: Request, res: Response, next: NextFunction) => {
+  // If passport already set req.user, unify it for the app
+  if (req.user) {
+    const user = req.user as any;
+    if (typeof user.getAttribute === 'function') {
+      (req as any).user = {
+        id: user.getAttribute('id'),
+        email: user.getAttribute('email'),
+        displayName: user.getAttribute('full_name') || ''
+      };
+    }
+    return next();
+  }
+
   const token = req.cookies && req.cookies['sb-access-token'];
   
   if (token) {
