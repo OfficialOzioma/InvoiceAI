@@ -22,17 +22,9 @@ export async function up(knex: Knex): Promise<void> {
 
 export async function down(knex: Knex): Promise<void> {
     await knex.schema.alterTable("organizations", (table) => {
-        table.dropColumns([
-            "email", 
-            "phone", 
-            "address", 
-            "currency", 
-            "tax_id", 
-            "logo_url", 
-            "primary_color", 
-            "secondary_color", 
-            "template_id"
-        ]);
+        table.dropColumn("primary_color");
+        table.dropColumn("secondary_color");
+        table.dropColumn("template_id");
     });
 }
 

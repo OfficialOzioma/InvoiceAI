@@ -246,16 +246,21 @@
                         </div>
                     <% } %>
 
-                    <div class="pt-8 flex items-center gap-4">
-                        <% if (step > 1) { %>
-                            <a href="/onboarding/step/<%= step - 1 %>" class="flex-1 bg-white border border-slate-200 text-secondary py-5 rounded-xl font-bold text-xs uppercase tracking-widest hover:border-primary transition-all text-center">
-                                Back
-                            </a>
-                        <% } %>
-                        <button type="submit" class="<%= step > 1 ? 'flex-[2]' : 'w-full' %> bg-primary text-white py-5 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-secondary transition-all shadow-xl shadow-blue-100 flex items-center justify-center gap-3">
-                            <%= step === 5 ? 'Launch Dashboard' : 'Continue' %>
-                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                        </button>
+                    <div class="pt-8 space-y-4">
+                        <div class="flex items-center gap-4">
+                            <% if (step > 1) { %>
+                                <a href="/onboarding/step/<%= step - 1 %>" class="flex-1 bg-white border border-slate-200 text-secondary py-5 rounded-xl font-bold text-xs uppercase tracking-widest hover:border-primary transition-all text-center">
+                                    Back
+                                </a>
+                            <% } %>
+                            <button type="submit" class="<%= step > 1 ? 'flex-[2]' : 'w-full' %> bg-primary text-white py-5 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-secondary transition-all shadow-xl shadow-blue-100 flex items-center justify-center gap-3">
+                                <%= step === 5 ? 'Launch Dashboard' : 'Continue' %>
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <div class="text-center">
+                            <a href="/onboarding/skip" class="text-[9px] font-black text-slate-400 uppercase tracking-widest hover:text-primary transition-all">Skip for now & setup later</a>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -321,6 +326,19 @@
 
 <script type="module">
     import { GoogleGenAI, Type } from "https://esm.run/@google/genai";
+
+    window.toggleLogoMode = function(mode) {
+        const upload = document.getElementById('logoUploadSection');
+        const url = document.getElementById('logoUrlSection');
+        
+        if (mode === 'url') {
+            upload.classList.add('hidden');
+            url.classList.remove('hidden');
+        } else {
+            upload.classList.remove('hidden');
+            url.classList.add('hidden');
+        }
+    }
 
     window.toggleInvoiceMode = function(mode) {
         const manual = document.getElementById('manualFields');
@@ -396,42 +414,41 @@
         const divider = document.querySelector('.h-px.bg-slate-800.my-6');
 
         if (template === 'minimal') {
-            container.classList.add('flex', 'flex-col', 'items-center', 'text-center', 'pt-12', 'space-y-12');
-            logo.classList.add('mx-auto', 'mb-6', 'scale-125', 'grayscale');
+            container.classList.add('flex', 'flex-col', 'items-center', 'text-center', 'pt-16', 'space-y-16');
+            logo.classList.add('mx-auto', 'mb-10', 'scale-150', 'grayscale', 'bg-transparent');
             logo.classList.remove('bg-slate-800');
-            logo.classList.add('bg-transparent');
             
             bizName.classList.remove('truncate', 'text-sm');
-            bizName.classList.add('text-3xl', 'font-light', 'uppercase', 'tracking-[0.2em]', 'leading-tight', 'font-serif');
+            bizName.classList.add('text-4xl', 'font-light', 'uppercase', 'tracking-[0.3em]', 'leading-tight', 'font-serif');
             
             if (divider) {
                 divider.classList.remove('bg-slate-800');
-                divider.classList.add('bg-slate-700', 'w-16', 'mx-auto', 'h-0.5', 'my-12');
+                divider.classList.add('bg-slate-700', 'w-32', 'mx-auto', 'h-[2px]', 'my-16');
             }
 
             document.getElementById('previewPhone').classList.add('hidden');
-            document.getElementById('previewAddress').classList.add('text-[12px]', 'max-w-xs', 'font-normal', 'tracking-widest');
+            document.getElementById('previewAddress').classList.add('text-[11px]', 'max-w-xs', 'font-normal', 'tracking-[0.15em]', 'uppercase');
             document.getElementById('previewAddress').classList.remove('text-slate-500');
             document.getElementById('previewAddress').classList.add('text-slate-400');
             
-            document.getElementById('previewItemsPlaceholder').classList.add('border-b', 'border-slate-800', 'pb-4');
+            document.getElementById('previewItemsPlaceholder').classList.add('border-b-2', 'border-slate-800', 'pb-8');
         } else {
-            container.classList.remove('flex', 'flex-col', 'items-center', 'text-center', 'pt-12', 'space-y-12');
-            logo.classList.remove('mx-auto', 'mb-6', 'scale-125', 'grayscale', 'bg-transparent');
+            container.classList.remove('flex', 'flex-col', 'items-center', 'text-center', 'pt-16', 'space-y-16');
+            logo.classList.remove('mx-auto', 'mb-10', 'scale-150', 'grayscale', 'bg-transparent');
             logo.classList.add('bg-slate-800');
             
-            bizName.classList.remove('text-3xl', 'font-light', 'uppercase', 'tracking-[0.2em]', 'leading-tight');
-            bizName.style.fontFamily = '';
+            bizName.classList.remove('text-4xl', 'font-light', 'uppercase', 'tracking-[0.3em]', 'leading-tight', 'font-serif');
             bizName.classList.add('truncate', 'text-sm');
             
             if (divider) {
-                divider.classList.remove('bg-slate-700', 'w-16', 'mx-auto', 'h-0.5', 'my-12');
+                divider.classList.remove('bg-slate-700', 'w-32', 'mx-auto', 'h-[2px]', 'my-16');
                 divider.classList.add('bg-slate-800', 'h-px', 'my-6');
             }
 
             document.getElementById('previewPhone').classList.remove('hidden');
-            document.getElementById('previewAddress').classList.remove('text-[12px]', 'max-w-xs', 'font-normal', 'tracking-widest', 'text-slate-400');
+            document.getElementById('previewAddress').classList.remove('text-[11px]', 'max-w-xs', 'font-normal', 'tracking-[0.15em]', 'uppercase', 'text-slate-400');
             document.getElementById('previewAddress').classList.add('text-slate-500');
+            document.getElementById('previewItemsPlaceholder').classList.remove('border-b-2', 'border-slate-800', 'pb-8');
         }
 
         // Step 5 values
@@ -594,10 +611,8 @@
     document.getElementById('logoInput').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
-            // Clear and hide URL input
+            // Clear URL input
             document.getElementById('logoUrlInput').value = '';
-            document.getElementById('logoUrlSection').classList.add('hidden');
-            document.getElementById('logoDivider').classList.add('hidden');
             
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -611,17 +626,18 @@
 
     document.getElementById('logoUrlInput').addEventListener('input', function(e) {
         if (e.target.value) {
-            // Clear and hide file input
+            // Clear file input
             document.getElementById('logoInput').value = '';
-            document.getElementById('logoUploadSection').classList.add('hidden');
-            document.getElementById('logoDivider').classList.add('hidden');
             document.getElementById('removeLogo').classList.remove('hidden');
         } else {
-            document.getElementById('logoUploadSection').classList.remove('hidden');
-            document.getElementById('logoDivider').classList.remove('hidden');
             document.getElementById('removeLogo').classList.add('hidden');
         }
     });
+
+    // Initialize toggle state if URL exists
+    if (document.getElementById('logoUrlInput').value) {
+        window.toggleLogoMode('url');
+    }
     <% } %>
 </script>
 
