@@ -100,7 +100,8 @@ export class AuthService {
         logo_url: data.logoUrl,
         primary_color: data.colorPrimary || '#3B82F6',
         secondary_color: data.colorSecondary || '#0F172A',
-        template_id: data.templateId || 'modern'
+        template_id: data.templateId || 'modern',
+        plan: data.plan || 'free'
       };
 
       for (const [key, value] of Object.entries(fields)) {
@@ -109,10 +110,11 @@ export class AuthService {
         }
       }
 
-      await org.save();
+      const savedOrg = await org.save();
+      const orgId = savedOrg.getAttribute('id');
 
       const orgUser = new OrganizationUser();
-      orgUser.setAttribute('organization_id', org.getAttribute('id'));
+      orgUser.setAttribute('organization_id', orgId);
       orgUser.setAttribute('user_id', userId);
       orgUser.setAttribute('role', 'owner');
       await orgUser.save();

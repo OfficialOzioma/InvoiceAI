@@ -9,7 +9,7 @@ export const getOnboardingStep = (req: Request, res: Response) => {
   const titles = [
     'Business Information',
     'Branding & Identity',
-    'Template Selection',
+    'Subscription Plan',
     'Payment Configuration',
     'Your First Invoice'
   ];
