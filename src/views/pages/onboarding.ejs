@@ -1,5 +1,11 @@
 <%- include('../partials/layout-header') %>
 
+<style>
+    .font-serif { font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif; }
+    .tracking-widest-extra { tracking: 0.2em; }
+    #previewContainer { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+</style>
+
 <main class="min-h-screen bg-[#F8FAFC] py-12 px-6 lg:px-8">
     <div class="max-w-4xl mx-auto">
         <!-- Progress Header -->
@@ -30,7 +36,7 @@
                     <% if (step === 5) { %>
                         <p class="text-sm text-slate-500 font-medium">Almost there! Create your first draft and then you can continue to your dashboard.</p>
                     <% } else { %>
-                        <p class="text-sm text-slate-500 font-medium">Let's get your workspace ready for action.</p>
+                        <p class="text-sm text-slate-500 font-medium">Let's get your business ready. All details can be changed later.</p>
                     <% } %>
                 </div>
 
@@ -56,14 +62,20 @@
                                 <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Registration Address</label>
                                 <textarea name="address" required rows="3" placeholder="123 Business Way, Silicon Valley, CA" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all"><%= onboardingData.address || '' %></textarea>
                             </div>
-                            <div class="space-y-2">
-                                <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Default Currency</label>
-                                <select name="currency" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all appearance-none">
-                                    <option value="USD" <%= onboardingData.currency === 'USD' ? 'selected' : '' %>>$ - US Dollar</option>
-                                    <option value="EUR" <%= onboardingData.currency === 'EUR' ? 'selected' : '' %>>€ - Euro</option>
-                                    <option value="GBP" <%= onboardingData.currency === 'GBP' ? 'selected' : '' %>>£ - British Pound</option>
-                                    <option value="NGN" <%= onboardingData.currency === 'NGN' ? 'selected' : '' %>>₦ - Nigerian Naira</option>
-                                </select>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Default Currency</label>
+                                    <select name="currency" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all appearance-none">
+                                        <option value="USD" <%= onboardingData.currency === 'USD' ? 'selected' : '' %>>$ - US Dollar</option>
+                                        <option value="EUR" <%= onboardingData.currency === 'EUR' ? 'selected' : '' %>>€ - Euro</option>
+                                        <option value="GBP" <%= onboardingData.currency === 'GBP' ? 'selected' : '' %>>£ - British Pound</option>
+                                        <option value="NGN" <%= onboardingData.currency === 'NGN' ? 'selected' : '' %>>₦ - Nigerian Naira</option>
+                                    </select>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Tax Registration (Optional)</label>
+                                    <input type="text" name="taxId" value="<%= onboardingData.taxId || '' %>" placeholder="VAT-123456" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all">
+                                </div>
                             </div>
                         </div>
                     <% } else if (step === 2) { %>
@@ -72,7 +84,7 @@
                             <div class="space-y-4">
                                 <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Business Logo</label>
                                 <div class="flex flex-col gap-4">
-                                    <div class="flex items-center gap-6">
+                                    <div class="flex items-center gap-6" id="logoUploadSection">
                                         <div class="w-24 h-24 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center text-slate-400 overflow-hidden" id="logoPreview">
                                             <% if (onboardingData.logoUrl) { %>
                                                 <img src="<%= onboardingData.logoUrl %>" class="w-full h-full object-contain p-2">
@@ -80,17 +92,28 @@
                                                 <i data-lucide="image" class="w-8 h-8"></i>
                                             <% } %>
                                         </div>
-                                        <div class="flex-1">
+                                        <div class="flex-1 space-y-2">
                                             <input type="file" name="logo" id="logoInput" class="hidden" accept="image/*">
                                             <button type="button" onclick="document.getElementById('logoInput').click()" class="bg-slate-100 text-secondary px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-200 transition-all w-full">Upload Logo</button>
-                                            <p class="text-[10px] text-slate-400 mt-2 font-medium">PNG, JPG up to 2MB</p>
+                                            <div id="removeLogo" class="<%= onboardingData.logoUrl ? 'flex' : 'hidden' %> items-center justify-center gap-2 text-[10px] font-bold text-red-500 cursor-pointer hover:text-red-600" onclick="clearLogoSelections()">
+                                                <i data-lucide="x" class="w-3 h-3"></i> Remove Logo
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="relative">
-                                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                            <i data-lucide="link" class="w-4 h-4 text-slate-400"></i>
+
+                                    <div id="logoDivider" class="flex items-center gap-4 py-2 <%= onboardingData.logoUrl ? 'hidden' : '' %>">
+                                        <div class="h-px bg-slate-100 flex-1"></div>
+                                        <span class="text-[8px] font-black text-slate-300 uppercase tracking-widest">OR</span>
+                                        <div class="h-px bg-slate-100 flex-1"></div>
+                                    </div>
+
+                                    <div class="relative items-center gap-3 <%= onboardingData.logoUrl && !onboardingData.logoUrl.startsWith('data:') ? 'flex' : (onboardingData.logoUrl ? 'hidden' : 'block') %>" id="logoUrlSection">
+                                        <div class="flex-1 relative">
+                                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                                <i data-lucide="link" class="w-4 h-4 text-slate-400"></i>
+                                            </div>
+                                            <input type="url" name="logoUrl" id="logoUrlInput" value="<%= onboardingData.logoUrl && !onboardingData.logoUrl.startsWith('data:') ? onboardingData.logoUrl : '' %>" placeholder="Or paste logo URL (https://...)" class="w-full bg-slate-50 border border-slate-100 rounded-xl pl-11 pr-4 py-4 text-sm outline-none focus:border-primary transition-all">
                                         </div>
-                                        <input type="url" name="logoUrl" id="logoUrlInput" value="<%= onboardingData.logoUrl || '' %>" placeholder="Or paste logo URL (https://...)" class="w-full bg-slate-50 border border-slate-100 rounded-xl pl-11 pr-4 py-4 text-sm outline-none focus:border-primary transition-all">
                                     </div>
                                 </div>
                             </div>
@@ -373,17 +396,42 @@
         const divider = document.querySelector('.h-px.bg-slate-800.my-6');
 
         if (template === 'minimal') {
-            container.classList.add('flex', 'flex-col', 'items-center', 'text-center', 'pt-12', 'space-y-8');
-            logo.classList.add('mx-auto', 'mb-4');
-            bizName.classList.remove('text-sm');
-            bizName.classList.add('text-xl');
-            if (divider) divider.classList.add('w-1/4', 'mx-auto');
+            container.classList.add('flex', 'flex-col', 'items-center', 'text-center', 'pt-12', 'space-y-12');
+            logo.classList.add('mx-auto', 'mb-6', 'scale-125', 'grayscale');
+            logo.classList.remove('bg-slate-800');
+            logo.classList.add('bg-transparent');
+            
+            bizName.classList.remove('truncate', 'text-sm');
+            bizName.classList.add('text-3xl', 'font-light', 'uppercase', 'tracking-[0.2em]', 'leading-tight', 'font-serif');
+            
+            if (divider) {
+                divider.classList.remove('bg-slate-800');
+                divider.classList.add('bg-slate-700', 'w-16', 'mx-auto', 'h-0.5', 'my-12');
+            }
+
+            document.getElementById('previewPhone').classList.add('hidden');
+            document.getElementById('previewAddress').classList.add('text-[12px]', 'max-w-xs', 'font-normal', 'tracking-widest');
+            document.getElementById('previewAddress').classList.remove('text-slate-500');
+            document.getElementById('previewAddress').classList.add('text-slate-400');
+            
+            document.getElementById('previewItemsPlaceholder').classList.add('border-b', 'border-slate-800', 'pb-4');
         } else {
-            container.classList.remove('flex', 'flex-col', 'items-center', 'text-center', 'pt-12', 'space-y-8');
-            logo.classList.remove('mx-auto', 'mb-4');
-            bizName.classList.remove('text-xl');
-            bizName.classList.add('text-sm');
-            if (divider) divider.classList.remove('w-1/4', 'mx-auto');
+            container.classList.remove('flex', 'flex-col', 'items-center', 'text-center', 'pt-12', 'space-y-12');
+            logo.classList.remove('mx-auto', 'mb-6', 'scale-125', 'grayscale', 'bg-transparent');
+            logo.classList.add('bg-slate-800');
+            
+            bizName.classList.remove('text-3xl', 'font-light', 'uppercase', 'tracking-[0.2em]', 'leading-tight');
+            bizName.style.fontFamily = '';
+            bizName.classList.add('truncate', 'text-sm');
+            
+            if (divider) {
+                divider.classList.remove('bg-slate-700', 'w-16', 'mx-auto', 'h-0.5', 'my-12');
+                divider.classList.add('bg-slate-800', 'h-px', 'my-6');
+            }
+
+            document.getElementById('previewPhone').classList.remove('hidden');
+            document.getElementById('previewAddress').classList.remove('text-[12px]', 'max-w-xs', 'font-normal', 'tracking-widest', 'text-slate-400');
+            document.getElementById('previewAddress').classList.add('text-slate-500');
         }
 
         // Step 5 values
@@ -529,19 +577,49 @@
         }
     }
 
+    window.clearLogoSelections = function() {
+        document.getElementById('logoInput').value = '';
+        document.getElementById('logoUrlInput').value = '';
+        document.getElementById('logoPreview').innerHTML = '<i data-lucide="image" class="w-8 h-8"></i>';
+        document.getElementById('previewLogo').innerHTML = '<i data-lucide="image" class="w-8 h-8 text-slate-700"></i>';
+        document.getElementById('removeLogo').classList.add('hidden');
+        document.getElementById('logoUrlSection').classList.remove('hidden');
+        document.getElementById('logoUploadSection').classList.remove('hidden');
+        document.getElementById('logoDivider').classList.remove('hidden');
+        lucide.createIcons();
+        updatePreview();
+    }
+
     <% if (step === 2) { %>
     document.getElementById('logoInput').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
+            // Clear and hide URL input
+            document.getElementById('logoUrlInput').value = '';
+            document.getElementById('logoUrlSection').classList.add('hidden');
+            document.getElementById('logoDivider').classList.add('hidden');
+            
             const reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById('logoPreview').innerHTML = `<img src="${e.target.result}" class="w-full h-full object-contain p-2">`;
-                document.getElementById('previewLogo').style.backgroundImage = `url(${e.target.result})`;
-                document.getElementById('previewLogo').style.backgroundSize = 'contain';
-                document.getElementById('previewLogo').style.backgroundRepeat = 'no-repeat';
-                document.getElementById('previewLogo').style.backgroundPosition = 'center';
+                document.getElementById('previewLogo').innerHTML = `<img src="${e.target.result}" class="w-full h-full object-contain p-2">`;
+                document.getElementById('removeLogo').classList.remove('hidden');
             }
             reader.readAsDataURL(file);
+        }
+    });
+
+    document.getElementById('logoUrlInput').addEventListener('input', function(e) {
+        if (e.target.value) {
+            // Clear and hide file input
+            document.getElementById('logoInput').value = '';
+            document.getElementById('logoUploadSection').classList.add('hidden');
+            document.getElementById('logoDivider').classList.add('hidden');
+            document.getElementById('removeLogo').classList.remove('hidden');
+        } else {
+            document.getElementById('logoUploadSection').classList.remove('hidden');
+            document.getElementById('logoDivider').classList.remove('hidden');
+            document.getElementById('removeLogo').classList.add('hidden');
         }
     });
     <% } %>

@@ -84,9 +84,18 @@ export class AuthService {
     };
   }
 
-  static async setupOrganization(userId: string, orgName: string) {
+  static async setupOrganization(userId: string, data: any) {
     const org = new Organization();
-    org.setAttribute('name', orgName);
+    org.setAttribute('name', data.businessName || 'My Business');
+    org.setAttribute('email', data.businessEmail);
+    org.setAttribute('phone', data.phone);
+    org.setAttribute('address', data.address);
+    org.setAttribute('currency', data.currency || 'USD');
+    org.setAttribute('tax_id', data.taxId);
+    org.setAttribute('logo_url', data.logoUrl);
+    org.setAttribute('primary_color', data.colorPrimary || '#3B82F6');
+    org.setAttribute('secondary_color', data.colorSecondary || '#0F172A');
+    org.setAttribute('template_id', data.templateId || 'modern');
     await org.save();
 
     const orgUser = new OrganizationUser();

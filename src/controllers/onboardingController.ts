@@ -57,6 +57,12 @@ export const postOnboardingStep = async (req: Request, res: Response) => {
     data.items = Object.values(data.items).filter((item: any) => (item as any).description || (item as any).amount);
   }
 
+  // Handle Logo Upload for Step 2
+  if (step === 2 && req.file) {
+      const base64 = req.file.buffer.toString('base64');
+      data.logoUrl = `data:${req.file.mimetype};base64,${base64}`;
+  }
+
   (req.session as any).onboardingData = {
     ...(req.session as any).onboardingData,
     ...data
@@ -65,7 +71,7 @@ export const postOnboardingStep = async (req: Request, res: Response) => {
   if (step === 5) {
       try {
           const finalData = (req.session as any).onboardingData;
-          const organization = await AuthService.setupOrganization(user.id, finalData.businessName || 'My Business');
+          const organization = await AuthService.setupOrganization(user.id, finalData);
           const orgId = organization.getAttribute('id');
 
           // If they provided a client during onboarding, create it
