@@ -103,7 +103,7 @@ export const postOnboardingStep = async (req: Request, res: Response) => {
 
           // Clear session data
           (req.session as any).onboardingData = null;
-          return res.redirect('/dashboard');
+          return res.redirect('/invoices');
       } catch (err: any) {
           console.error('Final onboarding error:', err);
           return res.redirect(`/onboarding/step/5?error=${encodeURIComponent(err.message)}`);

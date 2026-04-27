@@ -85,26 +85,43 @@ export class AuthService {
   }
 
   static async setupOrganization(userId: string, data: any) {
-    const org = new Organization();
-    org.setAttribute('name', data.businessName || 'My Business');
-    org.setAttribute('email', data.businessEmail);
-    org.setAttribute('phone', data.phone);
-    org.setAttribute('address', data.address);
-    org.setAttribute('currency', data.currency || 'USD');
-    org.setAttribute('tax_id', data.taxId);
-    org.setAttribute('logo_url', data.logoUrl);
-    org.setAttribute('primary_color', data.colorPrimary || '#3B82F6');
-    org.setAttribute('secondary_color', data.colorSecondary || '#0F172A');
-    org.setAttribute('template_id', data.templateId || 'modern');
-    await org.save();
+    try {
+      const org = new Organization();
+      org.setAttribute('name', data.businessName || 'My Business');
+      
+      // Mandatory fields with potential missing columns handled gracefully if possible
+      // but we know we added them in migrations
+      const fields = {
+        email: data.businessEmail,
+        phone: data.phone,
+        address: data.address,
+        currency: data.currency || 'USD',
+        tax_id: data.taxId,
+        logo_url: data.logoUrl,
+        primary_color: data.colorPrimary || '#3B82F6',
+        secondary_color: data.colorSecondary || '#0F172A',
+        template_id: data.templateId || 'modern'
+      };
 
-    const orgUser = new OrganizationUser();
-    orgUser.setAttribute('organization_id', org.getAttribute('id'));
-    orgUser.setAttribute('user_id', userId);
-    orgUser.setAttribute('role', 'owner');
-    await orgUser.save();
+      for (const [key, value] of Object.entries(fields)) {
+        if (value !== undefined) {
+          org.setAttribute(key as any, value);
+        }
+      }
 
-    return org;
+      await org.save();
+
+      const orgUser = new OrganizationUser();
+      orgUser.setAttribute('organization_id', org.getAttribute('id'));
+      orgUser.setAttribute('user_id', userId);
+      orgUser.setAttribute('role', 'owner');
+      await orgUser.save();
+
+      return org;
+    } catch (err) {
+      console.error('Error setting up organization:', err);
+      throw err;
+    }
   }
 
   static async resetPassword(email: string) {
