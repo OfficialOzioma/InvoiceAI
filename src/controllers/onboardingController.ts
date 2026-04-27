@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/authService.js';
+import { ClientService } from '../services/clientService.js';
+import { InvoiceService } from '../services/invoiceService.js';
 
 export const getOnboardingStep = (req: Request, res: Response) => {
   const step = parseInt(req.params.step || '1');
@@ -12,6 +14,11 @@ export const getOnboardingStep = (req: Request, res: Response) => {
   ];
 
   const onboardingData = (req.session as any).onboardingData || {};
+
+  // Force Sequential Access
+  if (step > 1 && !onboardingData.businessName) {
+      return res.redirect('/onboarding/step/1');
+  }
 
   res.render('pages/onboarding', {
     title: `${titles[step - 1]} | Onboarding`,
@@ -35,7 +42,7 @@ export const postOnboardingStep = async (req: Request, res: Response) => {
   }
   
   if (data.items) {
-    data.items = Object.values(data.items).filter((item: any) => item.description || item.amount);
+    data.items = Object.values(data.items).filter((item: any) => (item as any).description || (item as any).amount);
   }
 
   (req.session as any).onboardingData = {
@@ -46,7 +53,36 @@ export const postOnboardingStep = async (req: Request, res: Response) => {
   if (step === 5) {
       try {
           const finalData = (req.session as any).onboardingData;
-          await AuthService.setupOrganization(user.id, finalData.businessName || 'My Business');
+          const organization = await AuthService.setupOrganization(user.id, finalData.businessName || 'My Business');
+          const orgId = organization.getAttribute('id');
+
+          // If they provided a client during onboarding, create it
+          if (finalData.clientName) {
+            const client = await ClientService.createClient(orgId, {
+                name: finalData.clientName,
+                email: finalData.clientEmail || '',
+                address: finalData.clientAddress || ''
+            });
+
+            // Create first invoice
+            if (finalData.items && finalData.items.length > 0) {
+                const subtotal = finalData.items.reduce((sum: number, item: any) => sum + (parseFloat(item.amount) || 0), 0);
+                await InvoiceService.createInvoice(orgId, {
+                    client_id: client.getAttribute('id'),
+                    invoice_number: 'INV-001',
+                    subtotal,
+                    tax: subtotal * 0.1,
+                    total: subtotal * 1.1,
+                    status: 'Pending',
+                    items: finalData.items.map((item: any) => ({
+                        description: item.description,
+                        quantity: 1,
+                        price: parseFloat(item.amount) || 0
+                    }))
+                });
+            }
+          }
+
           // Clear session data
           (req.session as any).onboardingData = null;
           return res.redirect('/dashboard');

@@ -41,7 +41,12 @@ export const otpValidation = [
   validate
 ];
 
-export const onboardingValidation = [
-  body('name').trim().notEmpty().withMessage('Organization name is required'),
+export const onboardingStep1Validation = [
+  body('businessName').trim().notEmpty().withMessage('Business name is required'),
+  validate
+];
+
+export const onboardingStep2Validation = [
+  body('industry').optional().trim(),
   validate
 ];

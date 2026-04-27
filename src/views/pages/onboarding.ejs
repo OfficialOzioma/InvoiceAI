@@ -20,6 +20,13 @@
             <div class="bg-white p-8 lg:p-12 rounded-[40px] shadow-2xl shadow-blue-500/5 border border-slate-100 space-y-8">
                 <div class="space-y-2">
                     <h2 class="text-3xl font-black tracking-tighter text-secondary"><%= stepTitle %></h2>
+                    
+                    <% if (error) { %>
+                        <div class="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-xs font-bold mb-4">
+                            <%= error %>
+                        </div>
+                    <% } %>
+
                     <% if (step === 5) { %>
                         <p class="text-sm text-slate-500 font-medium">Almost there! Create your first draft and then you can continue to your dashboard.</p>
                     <% } else { %>

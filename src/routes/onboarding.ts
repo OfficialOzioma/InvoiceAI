@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import { getOnboardingStep, postOnboardingStep } from '../controllers/onboardingController.js';
-import { onboardingValidation } from '../middleware/validation.js';
+import { onboardingStep1Validation, onboardingStep2Validation } from '../middleware/validation.js';
 
 const router = Router();
 
-// Step 1 validation
-router.get('/onboarding/step/:step', getOnboardingStep);
-router.post('/onboarding/step/1', onboardingValidation, postOnboardingStep);
-router.post('/onboarding/step/:step', postOnboardingStep);
+// Validation per step
+router.get('/step/:step', getOnboardingStep);
+router.post('/step/1', onboardingStep1Validation, postOnboardingStep);
+router.post('/step/2', onboardingStep2Validation, postOnboardingStep);
+router.post('/step/:step', postOnboardingStep);
 
 export default router;
