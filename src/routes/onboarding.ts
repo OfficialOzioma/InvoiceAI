@@ -4,10 +4,10 @@ import { onboardingStep1Validation, onboardingStep2Validation } from '../middlew
 
 const router = Router();
 
-// Validation per step
+// Redirect /onboarding to /onboarding/step/1
+router.get('/', (req, res) => res.redirect('/onboarding/step/1'));
+
 router.get('/step/:step', getOnboardingStep);
-router.post('/step/1', onboardingStep1Validation, postOnboardingStep);
-router.post('/step/2', onboardingStep2Validation, postOnboardingStep);
 router.post('/step/:step', postOnboardingStep);
 
 export default router;

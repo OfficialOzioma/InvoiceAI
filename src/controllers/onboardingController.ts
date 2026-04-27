@@ -4,7 +4,8 @@ import { ClientService } from '../services/clientService.js';
 import { InvoiceService } from '../services/invoiceService.js';
 
 export const getOnboardingStep = (req: Request, res: Response) => {
-  const step = parseInt(req.params.step || '1');
+  let step = parseInt(req.params.step || '1');
+  if (isNaN(step)) step = 1;
   const titles = [
     'Business Information',
     'Branding & Identity',
@@ -31,11 +32,22 @@ export const getOnboardingStep = (req: Request, res: Response) => {
 };
 
 export const postOnboardingStep = async (req: Request, res: Response) => {
-  const step = parseInt(req.params.step);
+  let step = parseInt(req.params.step);
+  if (isNaN(step)) step = 1;
   const data = req.body;
   const user = (req as any).user;
   
   if (!user) return res.redirect('/login');
+
+  // Manual Validation for Step 1
+  if (step === 1) {
+      if (!data.businessName || data.businessName.trim() === '') {
+          return res.redirect(`/onboarding/step/1?error=${encodeURIComponent('Business name is required')}`);
+      }
+      if (!data.businessEmail || !data.businessEmail.includes('@')) {
+          return res.redirect(`/onboarding/step/1?error=${encodeURIComponent('A valid business email is required')}`);
+      }
+  }
 
   if (!(req.session as any).onboardingData) {
     (req.session as any).onboardingData = {};
