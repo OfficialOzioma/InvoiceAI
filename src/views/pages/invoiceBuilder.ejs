@@ -122,17 +122,21 @@
             </button>
           </div>
           <div class="w-72 space-y-4">
+            <% 
+              const currency = locals.organization ? organization.getAttribute('currency') : 'USD';
+              const symbol = currency === 'NGN' ? '₦' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$';
+            %>
             <div class="flex justify-between text-sm text-muted">
               <span>Subtotal</span>
-              <span id="subtotalDisplay" class="font-bold font-mono">$0.00</span>
+              <span id="subtotalDisplay" class="font-bold font-mono"><%= symbol %>0.00</span>
             </div>
             <div class="flex justify-between text-sm text-muted">
               <span>Estimated Tax (10%)</span>
-              <span id="taxDisplay" class="font-bold font-mono">$0.00</span>
+              <span id="taxDisplay" class="font-bold font-mono"><%= symbol %>0.00</span>
             </div>
             <div class="pt-4 border-t-2 border-secondary flex justify-between items-center bg-blue-50 px-6 py-4 rounded-xl">
               <span class="font-bold text-secondary">Total Due</span>
-              <span id="totalDisplay" class="text-2xl font-extrabold font-mono text-primary tracking-tighter">$0.00</span>
+              <span id="totalDisplay" class="text-2xl font-extrabold font-mono text-primary tracking-tighter"><%= symbol %>0.00</span>
             </div>
           </div>
         </div>

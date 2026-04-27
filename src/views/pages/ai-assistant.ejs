@@ -136,8 +136,8 @@
                                 <tr>
                                     <td class="py-4 text-slate-700 font-medium" x-text="item.description"></td>
                                     <td class="py-4 text-right text-slate-500" x-text="item.quantity"></td>
-                                    <td class="py-4 text-right text-slate-500" x-text="'$' + item.unitPrice"></td>
-                                    <td class="py-4 text-right text-slate-900 font-bold" x-text="'$' + item.total"></td>
+                                    <td class="py-4 text-right text-slate-500" x-text="currencySymbol + item.unitPrice"></td>
+                                    <td class="py-4 text-right text-slate-900 font-bold" x-text="currencySymbol + item.total"></td>
                                 </tr>
                             </template>
                         </tbody>
@@ -146,7 +146,7 @@
                     <div class="flex justify-end pt-6 border-t border-slate-100">
                         <div class="text-right">
                             <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Total Amount</div>
-                            <div class="text-3xl font-black text-slate-900 tracking-tighter" x-text="'$' + draft?.total"></div>
+                            <div class="text-3xl font-black text-slate-900 tracking-tighter" x-text="currencySymbol + draft?.total"></div>
                         </div>
                     </div>
                 </div>
@@ -174,6 +174,7 @@ window.aiAssistantData = function() {
         loading: false,
         draft: null,
         templateId: '<%= templateId %>',
+        currencySymbol: '<%= organization ? (organization.getAttribute("currency") === "NGN" ? "₦" : organization.getAttribute("currency") === "EUR" ? "€" : organization.getAttribute("currency") === "GBP" ? "£" : "$") : "$" %>',
         templates: [
             { id: 'minimal.html', name: 'Minimal' },
             { id: 'corporate.html', name: 'Corporate' },

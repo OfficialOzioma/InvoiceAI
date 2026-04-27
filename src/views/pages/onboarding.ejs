@@ -139,67 +139,41 @@
                             </div>
                         </div>
                     <% } else if (step === 3) { %>
-                        <!-- Step 3: Subscription Plan -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <label class="relative cursor-pointer group">
-                                <input type="radio" name="plan" value="free" <%= onboardingData.plan === 'free' || !onboardingData.plan ? 'checked' : '' %> class="absolute opacity-0">
-                                <div class="border-2 border-slate-100 rounded-2xl p-6 transition-all group-has-[:checked]:border-primary group-has-[:checked]:bg-blue-50/50 h-full flex flex-col">
-                                    <div class="mb-4">
-                                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Basic</span>
-                                        <h3 class="text-xl font-bold mt-1">Free</h3>
-                                    </div>
-                                    <div class="flex-1 space-y-3">
-                                        <div class="flex items-center gap-2 text-[9px] text-slate-500 font-medium">
-                                            <i data-lucide="check" class="w-3 h-3 text-secondary"></i> 5 Invoices / month
+                        <!-- Step 3: Industry & Business Type -->
+                        <div class="space-y-6">
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Business Industry</label>
+                                <select name="industry" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all appearance-none">
+                                    <option value="" disabled <%= !onboardingData.industry ? 'selected' : '' %>>Select your industry</option>
+                                    <option value="software" <%= onboardingData.industry === 'software' ? 'selected' : '' %>>Software & Technology</option>
+                                    <option value="creative" <%= onboardingData.industry === 'creative' ? 'selected' : '' %>>Creative Services (Design, Writing)</option>
+                                    <option value="consulting" <%= onboardingData.industry === 'consulting' ? 'selected' : '' %>>Consulting & Strategy</option>
+                                    <option value="healthcare" <%= onboardingData.industry === 'healthcare' ? 'selected' : '' %>>Healthcare & Medical</option>
+                                    <option value="retail" <%= onboardingData.industry === 'retail' ? 'selected' : '' %>>Retail & E-commerce</option>
+                                    <option value="construction" <%= onboardingData.industry === 'construction' ? 'selected' : '' %>>Construction & Real Estate</option>
+                                    <option value="education" <%= onboardingData.industry === 'education' ? 'selected' : '' %>>Education & Training</option>
+                                    <option value="other" <%= onboardingData.industry === 'other' ? 'selected' : '' %>>Other</option>
+                                </select>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Business Type</label>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <label class="relative cursor-pointer group">
+                                        <input type="radio" name="businessType" value="freelance" <%= (onboardingData.businessType || 'freelance') === 'freelance' ? 'checked' : '' %> class="absolute opacity-0">
+                                        <div class="border-2 border-slate-100 rounded-2xl p-4 transition-all group-has-[:checked]:border-primary group-has-[:checked]:bg-blue-50/50">
+                                            <span class="text-xs font-bold text-secondary block">Freelancer / Solo</span>
+                                            <span class="text-[9px] text-slate-500 mt-1 block">Working on your own</span>
                                         </div>
-                                        <div class="flex items-center gap-2 text-[9px] text-slate-500 font-medium">
-                                            <i data-lucide="check" class="w-3 h-3 text-secondary"></i> Basic Templates
+                                    </label>
+                                    <label class="relative cursor-pointer group">
+                                        <input type="radio" name="businessType" value="agency" <%= onboardingData.businessType === 'agency' ? 'checked' : '' %> class="absolute opacity-0">
+                                        <div class="border-2 border-slate-100 rounded-2xl p-4 transition-all group-has-[:checked]:border-primary group-has-[:checked]:bg-blue-50/50">
+                                            <span class="text-xs font-bold text-secondary block">Agency / Team</span>
+                                            <span class="text-[9px] text-slate-500 mt-1 block">Small to medium team</span>
                                         </div>
-                                    </div>
-                                    <div class="mt-6 text-xl font-bold">$0<span class="text-xs font-normal text-slate-400">/mo</span></div>
+                                    </label>
                                 </div>
-                            </label>
-
-                            <label class="relative cursor-pointer group">
-                                <input type="radio" name="plan" value="pro" <%= onboardingData.plan === 'pro' ? 'checked' : '' %> class="absolute opacity-0">
-                                <div class="border-2 border-slate-100 rounded-2xl p-6 transition-all group-has-[:checked]:border-primary group-has-[:checked]:bg-blue-50/50 h-full flex flex-col">
-                                    <div class="mb-4">
-                                        <span class="text-[10px] font-black uppercase tracking-widest text-primary">Popular</span>
-                                        <h3 class="text-xl font-bold mt-1">Pro</h3>
-                                    </div>
-                                    <div class="flex-1 space-y-3">
-                                        <div class="flex items-center gap-2 text-[9px] text-slate-500 font-medium">
-                                            <i data-lucide="check" class="w-3 h-3 text-secondary"></i> Unlimited Invoices
-                                        </div>
-                                        <div class="flex items-center gap-2 text-[9px] text-slate-500 font-medium">
-                                            <i data-lucide="check" class="w-3 h-3 text-secondary"></i> Custom Branding
-                                        </div>
-                                        <div class="flex items-center gap-2 text-[9px] text-slate-500 font-medium">
-                                            <i data-lucide="check" class="w-3 h-3 text-secondary"></i> AI Assistant
-                                        </div>
-                                    </div>
-                                    <div class="mt-6 text-xl font-bold">$19<span class="text-xs font-normal text-slate-400">/mo</span></div>
-                                </div>
-                            </label>
-
-                            <label class="relative cursor-pointer group">
-                                <input type="radio" name="plan" value="enterprise" <%= onboardingData.plan === 'enterprise' ? 'checked' : '' %> class="absolute opacity-0">
-                                <div class="border-2 border-slate-100 rounded-2xl p-6 transition-all group-has-[:checked]:border-primary group-has-[:checked]:bg-blue-50/50 h-full flex flex-col">
-                                    <div class="mb-4">
-                                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Scale</span>
-                                        <h3 class="text-xl font-bold mt-1">Enterprise</h3>
-                                    </div>
-                                    <div class="flex-1 space-y-3">
-                                        <div class="flex items-center gap-2 text-[9px] text-slate-500 font-medium">
-                                            <i data-lucide="check" class="w-3 h-3 text-secondary"></i> Multiple Users
-                                        </div>
-                                        <div class="flex items-center gap-2 text-[9px] text-slate-500 font-medium">
-                                            <i data-lucide="check" class="w-3 h-3 text-secondary"></i> Priority Support
-                                        </div>
-                                    </div>
-                                    <div class="mt-6 text-xl font-bold">$49<span class="text-xs font-normal text-slate-400">/mo</span></div>
-                                </div>
-                            </label>
+                            </div>
                         </div>
                     <% } else if (step === 4) { %>
                         <!-- Step 4: Payment Configuration -->
@@ -325,7 +299,7 @@
                                     <div id="previewBusinessName" class="text-sm font-black text-white truncate h-5"><%= onboardingData.businessName || 'Company Name' %></div>
                                     <div id="previewEmail" class="text-[7px] text-slate-400 h-2 leading-none truncate"><%= onboardingData.businessEmail || '' %></div>
                                     <div id="previewPhone" class="text-[7px] text-slate-400 h-2 leading-none"><%= onboardingData.phone || '' %></div>
-                                    <div id="previewAddress" class="text-[8px] text-slate-500 line-clamp-2 h-5 leading-[1.1] mt-0.5"><%= onboardingData.address || 'Street Address, City' %></div>
+                                    <div id="previewAddress" class="text-[8px] text-slate-500 line-clamp-3 h-auto leading-[1.1] mt-0.5"><%= onboardingData.address || 'Street Address, City' %></div>
                                 </div>
                             </div>
                             <div class="h-px bg-slate-800 my-6"></div>
@@ -437,6 +411,7 @@
         if (businessEmail) document.getElementById('previewEmail').innerText = businessEmail;
         if (address) document.getElementById('previewAddress').innerText = address;
         if (phone) document.getElementById('previewPhone').innerText = phone;
+        document.getElementById('previewTotal').innerText = `${symbol}0.00`;
 
         // Step 2 values (Logo & Colors)
         const primaryColor = currentData.colorPrimary || '#3B82F6';
@@ -632,10 +607,14 @@
                 const div = document.createElement('div');
                 div.className = 'flex gap-2';
                 div.innerHTML = `
-                    <input type="text" name="items[${idx}][description]" value="${item.description}" class="flex-1 bg-slate-50 border border-slate-100 rounded-lg px-3 py-3 text-xs">
-                    <input type="number" name="items[${idx}][amount]" value="${item.amount}" class="w-24 bg-slate-50 border border-slate-100 rounded-lg px-3 py-3 text-xs">
+                    <input type="text" name="items[${idx}][description]" value="${item.description}" class="flex-1 bg-slate-50 border border-slate-100 rounded-lg px-3 py-3 text-xs outline-none focus:border-primary">
+                    <input type="number" name="items[${idx}][amount]" value="${item.amount}" class="w-24 bg-slate-50 border border-slate-100 rounded-lg px-3 py-3 text-xs outline-none focus:border-primary">
                 `;
                 container.appendChild(div);
+                
+                div.querySelectorAll('input').forEach(input => {
+                    input.addEventListener('input', updatePreview);
+                });
             });
 
             window.toggleInvoiceMode('manual');

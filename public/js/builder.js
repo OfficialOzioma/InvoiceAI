@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
         calculateTotals();
     }
 
-    function calculateTotals() {
+    async function calculateTotals() {
         let subtotal = 0;
         const qtyInputs = document.querySelectorAll('.item-qty');
         const priceInputs = document.querySelectorAll('.item-price');
@@ -66,9 +66,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const tax = subtotal * 0.1;
         const total = subtotal + tax;
 
-        document.getElementById('subtotalDisplay').textContent = `$${subtotal.toFixed(2)}`;
-        document.getElementById('taxDisplay').textContent = `$${tax.toFixed(2)}`;
-        document.getElementById('totalDisplay').textContent = `$${total.toFixed(2)}`;
+        // Get currency symbol from the current UI or fallback
+        const symbol = document.getElementById('totalDisplay').textContent.charAt(0) || '$';
+        const cleanSymbol = isNaN(symbol) ? symbol : '$';
+
+        document.getElementById('subtotalDisplay').textContent = `${cleanSymbol}${subtotal.toFixed(2)}`;
+        document.getElementById('taxDisplay').textContent = `${cleanSymbol}${tax.toFixed(2)}`;
+        document.getElementById('totalDisplay').textContent = `${cleanSymbol}${total.toFixed(2)}`;
     }
 
     addItemBtn.addEventListener('click', () => {

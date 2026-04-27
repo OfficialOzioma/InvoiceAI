@@ -131,7 +131,10 @@ export const getBuilder = async (req: Request, res: Response) => {
   });
 };
 
-export const getAiAssistant = (req: Request, res: Response) => {
+export const getAiAssistant = async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  const orgs = await OrganizationService.getOrganizationsForUser(user.id);
+  const organization = orgs[0];
   const templateId = req.query.template as string || 'minimal.html';
   const geminiApiKey = process.env.GEMINI_API_KEY || '';
   
@@ -143,7 +146,8 @@ export const getAiAssistant = (req: Request, res: Response) => {
     title: 'AI Assistant | InvoiceAI', 
     layout: 'dashboard-layout', 
     templateId,
-    geminiApiKey
+    geminiApiKey,
+    organization
   });
 };
 
