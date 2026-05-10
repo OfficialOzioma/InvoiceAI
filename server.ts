@@ -7,16 +7,17 @@ import session from "express-session";
 import passport from "./src/lib/passport.js";
 import dotenv from "dotenv";
 import "./src/database/index.js"; // Initialize Sutando ORM
+// import "./sutando.cjs"; // Ensure Sutando is initialized before routes
 import routes from "./src/routes/index.js";
 import { checkAuth } from "./src/middleware/auth.js";
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename=fileURLToPath(import.meta.url);
+const __dirname=path.dirname(__filename);
 
-const app = express();
-const PORT = 3000;
+const app=express();
+const PORT=3000;
 
 // View engine setup
 app.set("view engine", "ejs");
@@ -29,13 +30,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'invoice-ai-secret',
+  secret: process.env.SESSION_SECRET||'invoice-ai-secret',
   resave: false,
   saveUninitialized: true,
-  cookie: { 
-    secure: process.env.NODE_ENV === 'production', 
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  cookie: {
+    secure: process.env.NODE_ENV==='production',
+    sameSite: process.env.NODE_ENV==='production'? 'none':'lax',
+    maxAge: 24*60*60*1000 // 24 hours
   }
 }));
 
@@ -45,8 +46,8 @@ app.use(passport.session());
 app.use(checkAuth);
 
 app.use((req, res, next) => {
-    res.locals.currentPath = req.path;
-    next();
+  res.locals.currentPath=req.path;
+  next();
 });
 
 app.use(express.static(path.join(__dirname, "public")));

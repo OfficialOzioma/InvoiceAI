@@ -1,10 +1,17 @@
-import { sutando, Model } from 'sutando';
+import { sutando, Model, compose, HasUniqueIds } from 'sutando';
 import { Organization } from './Organization.js';
+import { v4 as uuidv4 } from 'uuid';
+import crypto from 'node:crypto';
 
-export class User extends Model {
-  incrementing = false;
-  keyType = 'string';
-  table = 'users';
+const Base=compose(Model, HasUniqueIds) as any;
+
+export class User extends Base {
+  incrementing=false;
+  keyType='string';
+
+  newUniqueId() {
+    return crypto.randomUUID();
+  }
 
   // Define relationships if needed
   organizations() {
@@ -16,3 +23,5 @@ export class User extends Model {
     ).withPivot(['role']);
   }
 }
+
+export default User;
