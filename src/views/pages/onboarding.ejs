@@ -210,7 +210,7 @@
                             </label>
                         </div>
                     <% } else if (step === 5) { %>
-                        <!-- Step 5: First Invoice Training -->
+                        <!-- Step 5: First Invoice -->
                         <div class="space-y-6">
                             <div class="flex p-1 bg-slate-100 rounded-xl">
                                 <button type="button" onclick="toggleInvoiceMode('manual')" class="flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all" id="btnManual">Manual Entry</button>
@@ -230,17 +230,20 @@
                                 </div>
                                 <div class="space-y-2">
                                     <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Line Items (2 - 4 items)</label>
-                                    <div id="itemsContainer" class="space-y-2">
+                                    <div id="itemsContainer" class="space-y-3">
                                         <% for(let i = 0; i < 2; i++) { %>
-                                            <div class="flex gap-2">
-                                                <input type="text" name="items[<%= i %>][description]" placeholder="Item name" class="flex-1 bg-slate-50 border border-slate-100 rounded-lg px-3 py-3 text-xs">
-                                                <input type="number" name="items[<%= i %>][amount]" placeholder="Price" class="w-24 bg-slate-50 border border-slate-100 rounded-lg px-3 py-3 text-xs">
+                                            <div class="flex gap-2 group/item relative">
+                                                <input type="text" name="items[<%= i %>][description]" placeholder="Item name" class="flex-1 bg-slate-50 border border-slate-100 rounded-xl px-3 py-3 text-xs outline-none focus:border-primary transition-all">
+                                                <input type="number" name="items[<%= i %>][amount]" placeholder="0.00" class="w-24 bg-slate-50 border border-slate-100 rounded-xl px-3 py-3 text-xs outline-none focus:border-primary transition-all">
                                             </div>
                                         <% } %>
                                     </div>
-                                    <button type="button" id="addItemBtn" onclick="addInvoiceItem()" class="text-[10px] font-bold text-primary flex items-center gap-1 mt-2">
-                                        <i data-lucide="plus" class="w-3 h-3"></i> Add More Items
-                                    </button>
+                                    <div class="flex items-center justify-between mt-2">
+                                        <button type="button" id="addItemBtn" onclick="addInvoiceItem()" class="text-[10px] font-bold text-primary flex items-center gap-1 hover:opacity-70 transition-all">
+                                            <i data-lucide="plus" class="w-3 h-3"></i> Add More Items
+                                        </button>
+                                        <span id="limitMessage" class="hidden text-[9px] font-medium text-slate-400">Max 4 items reached. Continue on dashboard for more.</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -394,7 +397,7 @@
         // Merge stored and current data
         const currentData = { ...storedData };
         for (let [key, value] of formData.entries()) {
-            if (value) currentData[key] = value;
+            if (value && typeof value === 'string') currentData[key] = value;
         }
         
         // Step 1 values
@@ -411,7 +414,6 @@
         if (businessEmail) document.getElementById('previewEmail').innerText = businessEmail;
         if (address) document.getElementById('previewAddress').innerText = address;
         if (phone) document.getElementById('previewPhone').innerText = phone;
-        document.getElementById('previewTotal').innerText = `${symbol}0.00`;
 
         // Step 2 values (Logo & Colors)
         const primaryColor = currentData.colorPrimary || '#3B82F6';
@@ -424,65 +426,18 @@
         if (secondDisplay) secondDisplay.style.backgroundColor = secondaryColor;
 
         const previewBtn = document.getElementById('previewButton');
-        previewBtn.style.borderColor = `${primaryColor}4D`;
-        previewBtn.style.backgroundColor = `${primaryColor}1A`;
-        previewBtn.querySelector('span').style.color = primaryColor;
+        if (previewBtn) {
+            previewBtn.style.borderColor = `${primaryColor}4D`;
+            previewBtn.style.backgroundColor = `${primaryColor}1A`;
+            previewBtn.querySelector('span').style.color = primaryColor;
+        }
 
         const logoUrl = currentData.logoUrl;
         if (logoUrl) {
             document.getElementById('previewLogo').innerHTML = `<img src="${logoUrl}" class="w-full h-full object-contain p-2">`;
         }
 
-        // Step 3 values (Template)
-        const template = currentData.templateId || 'modern';
-        const container = document.getElementById('previewContainer');
-        const bizName = document.getElementById('previewBusinessName');
-        const logo = document.getElementById('previewLogo');
-        const divider = document.querySelector('.h-px.bg-slate-800.my-6');
-
-        if (template === 'royal') {
-            container.classList.add('flex', 'flex-col', 'items-center', 'text-center', 'pt-20', 'space-y-12');
-            logo.classList.add('mx-auto', 'mb-8', 'scale-[1.75]', 'grayscale', 'bg-transparent');
-            logo.classList.remove('bg-slate-800');
-            
-            bizName.classList.remove('truncate', 'text-sm');
-            bizName.classList.add('text-4xl', 'font-light', 'uppercase', 'tracking-[0.4em]', 'leading-tight', 'font-serif', 'max-w-[320px]', 'break-words');
-            
-            if (divider) {
-                divider.classList.remove('bg-slate-800');
-                divider.classList.add('bg-slate-900', 'w-24', 'mx-auto', 'h-[1px]', 'my-12', 'opacity-30');
-            }
-
-            document.getElementById('previewPhone').classList.add('hidden');
-            document.getElementById('previewEmail').classList.add('hidden');
-            document.getElementById('previewAddress').classList.add('text-[8px]', 'font-medium', 'tracking-[0.1em]', 'uppercase', 'font-serif');
-            document.getElementById('previewAddress').classList.remove('text-slate-500');
-            document.getElementById('previewAddress').classList.add('text-slate-600');
-            
-            document.getElementById('previewItemsPlaceholder').classList.add('border-y', 'border-slate-800', 'py-12', 'border-opacity-10');
-            document.getElementById('previewItemsPlaceholder').classList.remove('border-b');
-        } else {
-            container.classList.remove('flex', 'flex-col', 'items-center', 'text-center', 'pt-20', 'space-y-12');
-            logo.classList.remove('mx-auto', 'mb-8', 'scale-[1.75]', 'grayscale', 'bg-transparent');
-            logo.classList.add('bg-slate-800');
-            
-            bizName.classList.remove('text-4xl', 'font-light', 'uppercase', 'tracking-[0.4em]', 'leading-tight', 'font-serif', 'max-w-[320px]', 'break-words');
-            bizName.classList.add('truncate', 'text-sm');
-            
-            if (divider) {
-                divider.classList.remove('bg-slate-900', 'w-24', 'mx-auto', 'h-[1px]', 'my-12', 'opacity-30');
-                divider.classList.add('bg-slate-800', 'h-px', 'my-6');
-            }
-
-            document.getElementById('previewPhone').classList.remove('hidden');
-            document.getElementById('previewEmail').classList.remove('hidden');
-            document.getElementById('previewAddress').classList.remove('text-[8px]', 'font-medium', 'tracking-[0.1em]', 'uppercase', 'font-serif', 'text-slate-600');
-            document.getElementById('previewAddress').classList.add('text-slate-500');
-            document.getElementById('previewItemsPlaceholder').classList.remove('border-y', 'border-slate-800', 'py-12', 'border-opacity-10');
-            document.getElementById('previewItemsPlaceholder').classList.add('border-b');
-        }
-
-        // Step 5 values
+        // Step 5 values (Bill To)
         const clientName = currentData.clientName;
         const clientAddress = currentData.clientAddress;
         if (clientName) {
@@ -492,6 +447,8 @@
                     <span class="text-[8px] opacity-60">${clientAddress || ''}</span>
                 </div>
             `;
+        } else {
+            document.getElementById('previewClientName').innerText = 'Client Name';
         }
 
         // Calculate Items and Total
@@ -499,41 +456,56 @@
         const itemsPreview = document.getElementById('previewItems');
         const itemRows = document.querySelectorAll('#itemsContainer .flex');
         
-        if (itemRows.length > 0) {
-            let hasItems = false;
-            let itemsHtml = '';
-            itemRows.forEach(row => {
-                const desc = row.querySelector('input[name*="[description]"]')?.value;
-                const amt = parseFloat(row.querySelector('input[name*="[amount]"]')?.value) || 0;
-                
-                if (desc || amt > 0) {
-                    hasItems = true;
-                    itemsHtml += `<div class="flex justify-between text-[10px] text-slate-400"><span>${desc || 'Item'}</span><span>${symbol}${amt.toLocaleString()}</span></div>`;
-                    total += amt;
-                }
-            });
-
-            if (hasItems) {
-                itemsPreview.innerHTML = itemsHtml;
-                document.getElementById('previewTotal').innerText = `${symbol}${total.toLocaleString()}`;
+        let hasItems = false;
+        let itemsHtml = '';
+        
+        itemRows.forEach(row => {
+            const descInput = row.querySelector('input[name*="[description]"]');
+            const amtInput = row.querySelector('input[name*="[amount]"]');
+            
+            const desc = descInput ? descInput.value : '';
+            const amt = amtInput ? parseFloat(amtInput.value) || 0 : 0;
+            
+            if (desc || amt > 0) {
+                hasItems = true;
+                itemsHtml += `
+                    <div class="flex justify-between text-[10px] text-slate-400">
+                        <span class="truncate max-w-[80%]">${desc || 'Item'}</span>
+                        <span class="font-mono text-[9px]">${symbol}${amt.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                    </div>
+                `;
+                total += amt;
             }
+        });
+        
+        if (hasItems) {
+            itemsPreview.innerHTML = itemsHtml;
+            document.getElementById('previewTotal').innerText = `${symbol}${total.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+        } else {
+            itemsPreview.innerHTML = `
+                <div id="previewItemsPlaceholder" class="flex justify-between text-[10px] text-slate-400">
+                    <div class="h-3 w-1/2 bg-slate-800 rounded"></div>
+                    <div class="h-3 w-8 bg-slate-800 rounded"></div>
+                </div>
+            `;
+            document.getElementById('previewTotal').innerText = `${symbol}0.00`;
         }
     };
 
     window.addInvoiceItem = function() {
         const container = document.getElementById('itemsContainer');
         const count = container.querySelectorAll('.flex').length;
-        if (count >= 4) {
-            alert("Maximum 4 items allowed for initial setup. You can add more later in the dashboard.");
-            return;
-        }
+        if (count >= 4) return;
         
         const idx = count;
         const div = document.createElement('div');
-        div.className = 'flex gap-2';
+        div.className = 'flex gap-2 group/item relative';
         div.innerHTML = `
-            <input type="text" name="items[${idx}][description]" placeholder="Item name" class="flex-1 bg-slate-50 border border-slate-100 rounded-xl px-3 py-3 text-xs outline-none focus:border-primary">
-            <input type="number" name="items[${idx}][amount]" placeholder="Price" class="w-24 bg-slate-50 border border-slate-100 rounded-xl px-3 py-3 text-xs outline-none focus:border-primary">
+            <input type="text" name="items[${idx}][description]" placeholder="Item name" class="flex-1 bg-slate-50 border border-slate-100 rounded-xl px-3 py-3 text-xs outline-none focus:border-primary transition-all">
+            <input type="number" name="items[${idx}][amount]" placeholder="0.00" class="w-24 bg-slate-50 border border-slate-100 rounded-xl px-3 py-3 text-xs outline-none focus:border-primary transition-all">
+            <button type="button" onclick="this.parentElement.remove(); updatePreview(); document.getElementById('addItemBtn').style.display = 'flex'; document.getElementById('limitMessage').classList.add('hidden');" class="absolute -right-8 top-1/2 -translate-y-1/2 p-2 text-slate-300 hover:text-red-500 transition-all opacity-0 group-hover/item:opacity-100">
+                <i data-lucide="x" class="w-3 h-3"></i>
+            </button>
         `;
         container.appendChild(div);
         
@@ -541,22 +513,14 @@
             input.addEventListener('input', updatePreview);
         });
 
-        if (count + 1 >= 4) {
+        if (container.querySelectorAll('.flex').length >= 4) {
             document.getElementById('addItemBtn').style.display = 'none';
+            document.getElementById('limitMessage').classList.remove('hidden');
         }
-    };
-
-    // Attach listeners to all inputs
-    document.querySelectorAll('#onboardingForm input, #onboardingForm textarea, #onboardingForm select').forEach(input => {
-        input.addEventListener('input', updatePreview);
-        input.addEventListener('change', updatePreview);
-    });
-
-    // Initialize preview on load
-    document.addEventListener('DOMContentLoaded', () => {
+        
+        if (window.lucide) lucide.createIcons();
         updatePreview();
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-    });
+    };
 
     window.generateAIInvoice = async function() {
         const prompt = document.getElementById('aiPrompt').value;
@@ -605,10 +569,14 @@
             
             result.items.forEach((item, idx) => {
                 const div = document.createElement('div');
-                div.className = 'flex gap-2';
+                div.className = idx < 2 ? 'flex gap-2 group/item relative' : 'flex gap-2 group/item relative';
                 div.innerHTML = `
-                    <input type="text" name="items[${idx}][description]" value="${item.description}" class="flex-1 bg-slate-50 border border-slate-100 rounded-lg px-3 py-3 text-xs outline-none focus:border-primary">
-                    <input type="number" name="items[${idx}][amount]" value="${item.amount}" class="w-24 bg-slate-50 border border-slate-100 rounded-lg px-3 py-3 text-xs outline-none focus:border-primary">
+                    <input type="text" name="items[${idx}][description]" value="${item.description}" class="flex-1 bg-slate-50 border border-slate-100 rounded-xl px-3 py-3 text-xs outline-none focus:border-primary transition-all">
+                    <input type="number" name="items[${idx}][amount]" value="${item.amount}" class="w-24 bg-slate-50 border border-slate-100 rounded-xl px-3 py-3 text-xs outline-none focus:border-primary transition-all">
+                    ${idx >= 2 ? `
+                    <button type="button" onclick="this.parentElement.remove(); updatePreview(); document.getElementById('addItemBtn').style.display = 'flex'; document.getElementById('limitMessage').classList.add('hidden');" class="absolute -right-8 top-1/2 -translate-y-1/2 p-2 text-slate-300 hover:text-red-500 transition-all opacity-0 group-hover/item:opacity-100">
+                        <i data-lucide="x" class="w-3 h-3"></i>
+                    </button>` : ''}
                 `;
                 container.appendChild(div);
                 
@@ -617,7 +585,13 @@
                 });
             });
 
+            if (result.items.length >= 4) {
+                document.getElementById('addItemBtn').style.display = 'none';
+                document.getElementById('limitMessage').classList.remove('hidden');
+            }
+
             window.toggleInvoiceMode('manual');
+            if (window.lucide) lucide.createIcons();
             updatePreview();
         } catch (error) {
             console.error('AI Error:', error);
@@ -635,45 +609,38 @@
         document.getElementById('logoPreview').innerHTML = '<i data-lucide="image" class="w-8 h-8"></i>';
         document.getElementById('previewLogo').innerHTML = '<i data-lucide="image" class="w-8 h-8 text-slate-700"></i>';
         document.getElementById('removeLogo').classList.add('hidden');
-        document.getElementById('logoUrlSection').classList.remove('hidden');
-        document.getElementById('logoUploadSection').classList.remove('hidden');
-        document.getElementById('logoDivider').classList.remove('hidden');
         lucide.createIcons();
         updatePreview();
     }
 
-    <% if (step === 2) { %>
-    document.getElementById('logoInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            // Clear URL input
-            document.getElementById('logoUrlInput').value = '';
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('logoPreview').innerHTML = `<img src="${e.target.result}" class="w-full h-full object-contain p-2">`;
-                document.getElementById('previewLogo').innerHTML = `<img src="${e.target.result}" class="w-full h-full object-contain p-2">`;
-                document.getElementById('removeLogo').classList.remove('hidden');
-            }
-            reader.readAsDataURL(file);
-        }
+    // Attach listeners to all inputs
+    document.querySelectorAll('#onboardingForm input, #onboardingForm textarea, #onboardingForm select').forEach(input => {
+        input.addEventListener('input', updatePreview);
+        input.addEventListener('change', updatePreview);
     });
 
-    document.getElementById('logoUrlInput').addEventListener('input', function(e) {
-        if (e.target.value) {
-            // Clear file input
-            document.getElementById('logoInput').value = '';
-            document.getElementById('removeLogo').classList.remove('hidden');
-        } else {
-            document.getElementById('removeLogo').classList.add('hidden');
+    // Initialize preview on load
+    document.addEventListener('DOMContentLoaded', () => {
+        updatePreview();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+        // Specific handling for Logo Input in Step 2
+        const logoInput = document.getElementById('logoInput');
+        if (logoInput) {
+            logoInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById('logoPreview').innerHTML = `<img src="${e.target.result}" class="w-full h-full object-contain p-2">`;
+                        document.getElementById('previewLogo').innerHTML = `<img src="${e.target.result}" class="w-full h-full object-contain p-2">`;
+                        document.getElementById('removeLogo').classList.remove('hidden');
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
         }
     });
-
-    // Initialize toggle state if URL exists
-    if (document.getElementById('logoUrlInput').value) {
-        window.toggleLogoMode('url');
-    }
-    <% } %>
 </script>
 
 <%- include('../partials/layout-footer') %>
