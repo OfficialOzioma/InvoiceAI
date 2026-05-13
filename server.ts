@@ -10,8 +10,12 @@ import "./src/database/index.js"; // Initialize Sutando ORM
 // import "./sutando.cjs"; // Ensure Sutando is initialized before routes
 import routes from "./src/routes/index.js";
 import { checkAuth } from "./src/middleware/auth.js";
+import { auth } from "./src/utils/authHelper.js";
 
 dotenv.config();
+
+// Global Laravel-like auth() helper
+(globalThis as any).auth=auth;
 
 const __filename=fileURLToPath(import.meta.url);
 const __dirname=path.dirname(__filename);

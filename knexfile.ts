@@ -7,7 +7,7 @@ const config: { [key: string]: Knex.Config } = {
   development: {
     client: "postgresql",
     connection: process.env.DATABASE_URL ? {
-      connectionString: process.env.DATABASE_URL,
+      connectionString: process.env.DATABASE_URL.trim(),
       ssl: { rejectUnauthorized: false }
     } : "postgres://postgres:postgres@localhost:5432/postgres",
     pool: {
@@ -23,7 +23,7 @@ const config: { [key: string]: Knex.Config } = {
   production: {
     client: "postgresql",
     connection: {
-      connectionString: process.env.DATABASE_URL,
+      connectionString: process.env.DATABASE_URL?.trim() || '',
       ssl: { rejectUnauthorized: false }
     },
     pool: {
