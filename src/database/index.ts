@@ -1,6 +1,6 @@
 import { sutando } from 'sutando';
 import knex from 'knex';
-import knexConfig from '../../knexfile.js';
+import knexConfig from '../../knexfile.ts';
 
 // Setup connection based on environment
 const env = process.env.NODE_ENV || 'development';
