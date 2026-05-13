@@ -6,6 +6,10 @@ import bcrypt from 'bcrypt';
 
 dotenv.config();
 
+if (!process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID === 'dummy_id') {
+  console.warn('⚠️ WARNING: GOOGLE_CLIENT_ID is not configured. Google Sign-In will fail with 401: invalid_client.');
+}
+
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID || 'dummy_id',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'dummy_secret',
