@@ -12,21 +12,35 @@ router.get('/verify-otp', getVerifyOtp);
 
 // Google OAuth
 router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-router.get('/auth/google/callback', 
-  passport.authenticate('google', { failureRedirect: '/login?error=google_failed' }),
-  (req, res) => {
-    // On success, set our manual token as well for consistency with checkAuth
-    const user = req.user as any;
-    if (user) {
-        res.cookie('sb-access-token', `token_${user.getAttribute('id')}`, { 
-            httpOnly: true, 
-            secure: process.env.NODE_ENV === 'production', 
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' 
-        });
+router.get('/auth/google/callback', (req, res, next) => {
+  passport.authenticate('google', (err: any, user: any, info: any) => {
+    if (err) {
+      console.error('Passport Google Auth Error:', err);
+      return res.redirect('/login?error=' + encodeURIComponent(err.message || 'google_failed'));
     }
-    res.redirect('/onboarding');
-  }
-);
+    if (!user) {
+      console.error('Passport Google Auth Failed:', info);
+      return res.redirect('/login?error=' + encodeURIComponent(info?.message || 'google_failed'));
+    }
+    req.logIn(user, (err) => {
+      if (err) {
+        console.error('Passport Login Error:', err);
+        return res.redirect('/login?error=login_failed');
+      }
+      
+      // On success, set our manual token as well for consistency with checkAuth
+      if (user) {
+          const userId = typeof user.getAttribute === 'function' ? user.getAttribute('id') : user.id;
+          res.cookie('sb-access-token', `token_${userId}`, { 
+              httpOnly: true, 
+              secure: process.env.NODE_ENV === 'production', 
+              sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' 
+          });
+      }
+      res.redirect('/onboarding');
+    });
+  })(req, res, next);
+});
 
 router.get('/auth/callback', getOAuthCallback);
 router.post('/auth/set-session', postOAuthSession);

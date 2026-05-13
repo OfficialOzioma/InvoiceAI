@@ -9,10 +9,16 @@ dotenv.config();
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID || 'dummy_id',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'dummy_secret',
-    callbackURL: "/auth/google/callback",
+    callbackURL: process.env.APP_URL 
+      ? `${process.env.APP_URL.replace(/\/$/, '')}/auth/google/callback` 
+      : "/auth/google/callback",
     passReqToCallback: true
   },
   async (req, accessToken, refreshToken, profile, done) => {
+    if (!process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID === 'dummy_id') {
+      console.error('GOOGLE_CLIENT_ID is not set. Please set it in your environment variables.');
+      return done(null, false, { message: 'Google Auth not configured' });
+    }
     try {
       const email = profile.emails?.[0].value;
       if (!email) return done(new Error('No email found from Google'));
