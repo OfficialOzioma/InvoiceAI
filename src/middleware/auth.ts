@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/authService.js';
 import { OrganizationService } from '../services/organizationService.js';
-import { Auth } from '../utils/authHelper.js';
+import { Auth, auth } from '../utils/authHelper.js';
 
 export const checkAuth = async (req: Request, res: Response, next: NextFunction) => {
   const isAuthPath = req.path.startsWith('/login') || req.path.startsWith('/signup') || req.path.startsWith('/auth');
@@ -47,7 +47,8 @@ export const checkAuth = async (req: Request, res: Response, next: NextFunction)
   }
 
   // Make auth() and Auth available in templates
-  res.locals.auth = Auth;
+  res.locals.auth = auth;
+  res.locals.Auth = Auth;
   res.locals.user = unifiedUser;
 
   next();
