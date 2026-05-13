@@ -18,10 +18,19 @@
         
         <!-- Action Buttons & Mobile Toggle -->
         <div class="flex items-center gap-4 shrink-0">
-            <a href="/login" class="hidden sm:block text-[13px] font-bold uppercase tracking-widest text-slate-500 hover:text-primary transition-colors">Login</a>
-            <a href="/signup" class="bg-primary text-white px-6 py-3 rounded-full text-[13px] font-bold uppercase tracking-widest hover:bg-secondary transition-all shadow-lg shadow-blue-100">
-                Start Free
-            </a>
+            <% if (auth().user()) { %>
+                <a href="/dashboard" class="hidden sm:block text-[13px] font-bold uppercase tracking-widest text-slate-500 hover:text-primary transition-colors">Dashboard</a>
+                <form action="/auth/logout" method="POST" class="inline">
+                    <button type="submit" class="bg-secondary text-white px-6 py-3 rounded-full text-[13px] font-bold uppercase tracking-widest hover:bg-secondary/90 transition-all shadow-lg shadow-blue-100">
+                        Logout
+                    </button>
+                </form>
+            <% } else { %>
+                <a href="/login" class="hidden sm:block text-[13px] font-bold uppercase tracking-widest text-slate-500 hover:text-primary transition-colors">Login</a>
+                <a href="/signup" class="bg-primary text-white px-6 py-3 rounded-full text-[13px] font-bold uppercase tracking-widest hover:bg-secondary transition-all shadow-lg shadow-blue-100">
+                    Start Free
+                </a>
+            <% } %>
             <!-- Hamburger Menu Button -->
             <button @click="mobileMenuOpen = !mobileMenuOpen" class="lg:hidden text-slate-600 hover:text-primary transition-colors focus:outline-none p-2">
                 <i class="fa-solid" :class="mobileMenuOpen ? 'fa-xmark text-2xl' : 'fa-bars text-xl'"></i>
