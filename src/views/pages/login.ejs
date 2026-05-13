@@ -24,12 +24,18 @@
                     <input type="email" name="email" required placeholder="name@company.com" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all">
                 </div>
                 
-                <div class="space-y-2">
+                <div class="space-y-2" x-data="{ show: false }">
                     <div class="flex items-center justify-between">
                         <label class="text-[10px] font-bold uppercase tracking-widest text-muted">Password</label>
                         <a href="/forgot-password" class="text-[10px] font-bold uppercase tracking-widest text-primary hover:text-secondary transition-colors">Forgot?</a>
                     </div>
-                    <input type="password" name="password" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all">
+                    <div class="relative">
+                        <input :type="show ? 'text' : 'password'" name="password" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-sm outline-none focus:border-primary transition-all pr-12">
+                        <button type="button" @click="show = !show" class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-primary transition-colors">
+                            <i x-show="!show" data-lucide="eye" class="w-4 h-4"></i>
+                            <i x-show="show" data-lucide="eye-off" class="w-4 h-4" style="display: none;"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <button type="submit" class="w-full bg-primary text-white py-5 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-secondary transition-all shadow-xl shadow-blue-100">
